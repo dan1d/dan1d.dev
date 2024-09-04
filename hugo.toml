@@ -1,0 +1,8 @@
+baseURL = 'https://dan1d.dev'
+languageCode = 'en-us'
+title = 'dan1d.dev'
+[build]
+  [build.postCSS]
+    includeFiles = ["assets/css/**.css"]
+    excludeFiles = ["**/node_modules/**"]
+    postcssCmd = "npx postcss"

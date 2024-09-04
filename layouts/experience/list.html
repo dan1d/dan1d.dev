@@ -1,0 +1,17 @@
+{{ define "main" }}
+<section class="min-h-screen flex flex-col bg-gray-50">
+    <div class="container mx-auto py-16 px-4 flex-grow">
+        <h2 class="text-5xl font-bold mb-12 text-center text-gray-800">{{ .Title }}</h2>
+
+        <!-- Grid for Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {{ range $index, $section := (split .Content "-split-here-") }}
+            <div class="bg-white rounded-lg shadow-lg p-6 min-h-[300px] transform transition duration-300 hover:scale-105 hover:shadow-2xl">
+                <!-- Card Content -->
+                <div class="text-lg leading-snug tracking-wide text-gray-700 space-y-4">{{ $section | safeHTML }}</div>
+            </div>
+            {{ end }}
+        </div>
+    </div>
+</section>
+{{ end }}
