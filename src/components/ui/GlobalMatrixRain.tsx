@@ -9,18 +9,12 @@ import {
   type CharacterSprites,
 } from "@/data/matrixFigures";
 
-// ─── Character set ───────────────────────────────────────────────────────────
+// ─── Character set (shared) ──────────────────────────────────────────────────
 
-const KATAKANA =
-  "\u30A0\u30A1\u30A2\u30A3\u30A4\u30A5\u30A6\u30A7\u30A8\u30A9\u30AA\u30AB\u30AC\u30AD\u30AE\u30AF" +
-  "\u30B0\u30B1\u30B2\u30B3\u30B4\u30B5\u30B6\u30B7\u30B8\u30B9\u30BA\u30BB\u30BC\u30BD\u30BE\u30BF" +
-  "\u30C0\u30C1\u30C2\u30C3\u30C4\u30C5\u30C6\u30C7\u30C8\u30C9\u30CA\u30CB\u30CC\u30CD\u30CE\u30CF";
-const LATIN = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&";
-const ALL_CHARS = KATAKANA + LATIN;
+import { MATRIX_CHARS, randomMatrixChar } from "@/lib/matrix";
 
-function rndChar() {
-  return ALL_CHARS[Math.floor(Math.random() * ALL_CHARS.length)];
-}
+const rndChar = randomMatrixChar;
+const ALL_CHARS = MATRIX_CHARS;
 
 function randomBetween(min: number, max: number) {
   return min + Math.random() * (max - min);

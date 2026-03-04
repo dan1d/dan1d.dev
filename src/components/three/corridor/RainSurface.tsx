@@ -59,7 +59,9 @@ const RAIN_FRAG = `
       trail = (1.0 - t) * (1.0 - t) * 0.85 + 0.15;
     }
 
-    float bright = max(uBase, trail);
+    // Per-character brightness variation for organic look
+    float charVariation = 0.7 + hash(id * 3.17) * 0.6;
+    float bright = max(uBase, trail) * charVariation;
 
     // Character from atlas (buzzes periodically)
     float buzzRate = 4.0 + cH * 4.0;
@@ -72,15 +74,15 @@ const RAIN_FRAG = `
     float alpha = charA * bright * uBright * fog;
     if (alpha < 0.008) discard;
 
-    // Head chars are white-green, trail is green
+    // Head chars are bright white-green, trail is vivid green
     vec3 color;
     if (isHead > 0.5) {
-      color = vec3(0.7, 1.0, 0.8);
+      color = vec3(0.8, 1.0, 0.85);
     } else {
-      color = vec3(0.0, 0.35 + bright * 0.65, 0.05 + bright * 0.15);
+      color = vec3(0.0, 0.4 + bright * 0.6, 0.08 + bright * 0.2);
     }
 
-    gl_FragColor = vec4(color * bright, alpha);
+    gl_FragColor = vec4(color * bright * 1.3, alpha);
   }
 `;
 
