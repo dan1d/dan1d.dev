@@ -48,7 +48,6 @@ export default function ARExperience() {
         gsap.registerPlugin(ScrollTrigger);
 
         ctx = gsap.context(() => {
-          // Left panel: slides in from left
           if (leftPanelRef.current) {
             gsap.fromTo(
               leftPanelRef.current,
@@ -67,7 +66,6 @@ export default function ARExperience() {
             );
           }
 
-          // Steps list: staggered fade-in
           if (stepsRef.current) {
             const stepItems = stepsRef.current.querySelectorAll("li");
             if (stepItems.length > 0) {
@@ -90,7 +88,6 @@ export default function ARExperience() {
             }
           }
 
-          // Right panel: slides in from right
           if (rightPanelRef.current) {
             gsap.fromTo(
               rightPanelRef.current,
@@ -110,7 +107,7 @@ export default function ARExperience() {
           }
         }, sectionRef);
       } catch {
-        // GSAP not available in test/SSR — skip
+        // GSAP not available in test/SSR
       }
     };
 
@@ -127,148 +124,190 @@ export default function ARExperience() {
       ref={sectionRef}
       className="relative min-h-screen bg-black overflow-hidden flex items-center py-24"
     >
-      {/* Ambient glow background */}
+      {/* Scanline overlay */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.02]"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,65,0.08) 2px, rgba(0,255,65,0.08) 4px)",
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Ambient glow */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(34,211,238,0.03)_0%,_transparent_70%)]" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-green-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-lime-500/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        {/* Section header */}
-        <div className="text-center mb-16">
-          <span className="inline-block text-xs font-semibold tracking-widest text-cyan-400 uppercase mb-4 px-3 py-1 rounded-full border border-cyan-400/30 bg-cyan-400/5">
-            New
-          </span>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white mb-6">
-            Experience{" "}
-            <span className="bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
-              in AR
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full font-mono">
+        {/* Section header — terminal style */}
+        <div className="mb-16">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="h-px flex-1 bg-green-400/20" />
+            <span className="text-green-400/30 text-[10px] tracking-widest">
+              // IMMERSIVE
             </span>
+            <span className="h-px flex-1 bg-green-400/20" />
+          </div>
+          <h2
+            className="text-2xl sm:text-3xl font-bold tracking-tight mb-3"
+            style={{ color: "#39ff14", textShadow: "0 0 10px #39ff14" }}
+          >
+            Experience in AR
           </h2>
-          <p className="text-lg text-white/60 max-w-2xl mx-auto leading-relaxed">
-            Point your phone at the QR code or tap the button to see my projects
-            come alive in your space
+          <p className="text-sm text-green-400/50 max-w-2xl leading-relaxed">
+            &ldquo;
+            <span className="text-green-300/70">Free your mind.</span>
+            &rdquo;
+            <span className="text-green-400/30 ml-2">— Morpheus</span>
           </p>
         </div>
 
-        {/* Main card split layout */}
-        <div className="grid lg:grid-cols-2 gap-8 items-center">
-          {/* Left: QR code + instructions */}
-          <div ref={leftPanelRef} className="relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 lg:p-10 space-y-8">
-            {/* Inner glow */}
-            <div
-              className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500/5 to-purple-500/5 pointer-events-none"
-              aria-hidden="true"
-            />
+        {/* Two-column layout */}
+        <div className="grid lg:grid-cols-2 gap-6 items-start">
+          {/* Left: QR + instructions */}
+          <div ref={leftPanelRef} className="space-y-5">
+            {/* QR code card */}
+            <div className="relative border border-green-400/20 bg-black p-6 space-y-5">
+              {/* Corner brackets */}
+              <div
+                className="absolute top-2 left-2 w-2.5 h-2.5 border-t border-l border-green-400/40"
+                aria-hidden="true"
+              />
+              <div
+                className="absolute top-2 right-2 w-2.5 h-2.5 border-t border-r border-green-400/40"
+                aria-hidden="true"
+              />
 
-            {/* QR code block */}
-            <div className="relative flex flex-col items-center gap-4">
-              <div className="p-4 rounded-xl bg-[#0a0a0a] border border-white/10 shadow-xl shadow-cyan-500/10">
-                <QRCodeSVG
-                  data-testid="ar-qr-code"
-                  value={AR_URL}
-                  size={180}
-                  bgColor="#0a0a0a"
-                  fgColor="#22d3ee"
-                  level="M"
-                  includeMargin={false}
-                />
-              </div>
-              <p className="text-xs text-white/40 tracking-wide">
-                Scan to open on your phone
+              <p className="text-[10px] text-green-400/40 tracking-widest uppercase">
+                // SCAN_TARGET
               </p>
-            </div>
 
-            {/* Divider */}
-            <div className="flex items-center gap-4">
-              <div className="flex-1 h-px bg-white/10" />
-              <span className="text-xs text-white/30 font-medium">or</span>
-              <div className="flex-1 h-px bg-white/10" />
-            </div>
+              {/* QR code */}
+              <div className="flex flex-col items-center gap-3">
+                <div className="p-4 border border-green-400/20 bg-black">
+                  <QRCodeSVG
+                    data-testid="ar-qr-code"
+                    value={AR_URL}
+                    size={180}
+                    bgColor="#000000"
+                    fgColor="#00ff41"
+                    level="M"
+                    includeMargin={false}
+                  />
+                </div>
+                <p className="text-[11px] text-green-400/40 tracking-wide">
+                  Scan to open on your phone
+                </p>
+              </div>
 
-            {/* Launch AR button */}
-            <div className="flex justify-center">
-              <a
-                href="/ar"
-                data-testid="launch-ar-btn"
-                className="group relative inline-flex items-center gap-3 px-8 py-4 rounded-full font-semibold text-white overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25"
-              >
-                {/* Button gradient background */}
-                <span
-                  className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full"
-                  aria-hidden="true"
-                />
-                {/* Animated shimmer */}
-                <span
-                  className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"
-                  aria-hidden="true"
-                />
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="relative w-5 h-5"
-                  aria-hidden="true"
+              {/* Divider */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-green-400/15" />
+                <span className="text-[10px] text-green-400/30 tracking-widest">
+                  OR
+                </span>
+                <div className="flex-1 h-px bg-green-400/15" />
+              </div>
+
+              {/* Launch AR button */}
+              <div className="flex justify-center">
+                <a
+                  href="/ar"
+                  data-testid="launch-ar-btn"
+                  className="inline-flex items-center gap-3 px-6 py-3 text-sm tracking-widest border border-green-400/50 text-green-400 hover:border-green-400 hover:bg-green-400/10 hover:shadow-[0_0_20px_rgba(0,255,65,0.15)] transition-all duration-300"
                 >
-                  <path d="M3 7V5a2 2 0 0 1 2-2h2" />
-                  <path d="M17 3h2a2 2 0 0 1 2 2v2" />
-                  <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
-                  <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-                <span className="relative">Launch AR</span>
-              </a>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-4 h-4"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+                    <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+                    <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+                    <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  <span aria-hidden="true">[</span>
+                  LAUNCH_AR
+                  <span aria-hidden="true">]</span>
+                </a>
+              </div>
             </div>
 
-            {/* Step-by-step instructions */}
-            <ol ref={stepsRef} className="space-y-4" aria-label="How to use AR">
-              {steps.map((step) => (
-                <li key={step.number} className="flex items-start gap-4 group">
-                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border border-cyan-400/30 flex items-center justify-center text-sm font-bold text-cyan-400">
-                    {step.number}
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-white/90">
-                      {step.title}
-                    </p>
-                    <p className="text-xs text-white/50 mt-0.5">
-                      {step.description}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
+            {/* Steps card */}
+            <div className="relative border border-green-400/20 bg-black p-6">
+              <div
+                className="absolute top-2 left-2 w-2.5 h-2.5 border-t border-l border-green-400/40"
+                aria-hidden="true"
+              />
+              <div
+                className="absolute top-2 right-2 w-2.5 h-2.5 border-t border-r border-green-400/40"
+                aria-hidden="true"
+              />
+
+              <p className="text-[10px] text-green-400/40 tracking-widest uppercase mb-4">
+                // INSTRUCTIONS
+              </p>
+
+              <ol
+                ref={stepsRef}
+                className="space-y-4"
+                aria-label="How to use AR"
+              >
+                {steps.map((step) => (
+                  <li key={step.number} className="flex items-start gap-4">
+                    <span className="flex-shrink-0 w-7 h-7 border border-green-400/30 bg-black flex items-center justify-center text-xs font-bold text-green-400">
+                      {step.number}
+                    </span>
+                    <div>
+                      <p className="text-xs font-bold text-green-300">
+                        {step.title}
+                      </p>
+                      <p className="text-[11px] text-green-400/40 mt-0.5">
+                        {step.description}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
           </div>
 
           {/* Right: 3D preview */}
-          <div ref={rightPanelRef} className="relative h-80 lg:h-full min-h-[400px] rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
-            {/* Corner accents */}
+          <div
+            ref={rightPanelRef}
+            className="relative h-80 lg:h-full min-h-[400px] border border-green-400/20 bg-black overflow-hidden"
+          >
+            {/* Corner brackets */}
             <div
-              className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-cyan-400/60 rounded-tl-sm"
+              className="absolute top-2 left-2 w-3 h-3 border-t border-l border-green-400/40 z-10"
               aria-hidden="true"
             />
             <div
-              className="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-cyan-400/60 rounded-tr-sm"
+              className="absolute top-2 right-2 w-3 h-3 border-t border-r border-green-400/40 z-10"
               aria-hidden="true"
             />
             <div
-              className="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-purple-400/60 rounded-bl-sm"
+              className="absolute bottom-2 left-2 w-3 h-3 border-b border-l border-green-400/30 z-10"
               aria-hidden="true"
             />
             <div
-              className="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-purple-400/60 rounded-br-sm"
+              className="absolute bottom-2 right-2 w-3 h-3 border-b border-r border-green-400/30 z-10"
               aria-hidden="true"
             />
 
-            {/* Label */}
-            <div className="absolute top-5 left-1/2 -translate-x-1/2 z-10">
-              <span className="text-xs text-white/40 tracking-widest uppercase font-mono">
-                3D Preview
+            {/* Top label */}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+              <span className="text-[10px] text-green-400/40 tracking-widest uppercase">
+                // 3D_PREVIEW
               </span>
             </div>
 
@@ -278,8 +317,8 @@ export default function ARExperience() {
             </div>
 
             {/* Bottom label */}
-            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10">
-              <span className="text-xs text-cyan-400/60 tracking-wider font-mono">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+              <span className="text-[10px] text-green-400/50 tracking-wider">
                 Powered by WebXR
               </span>
             </div>

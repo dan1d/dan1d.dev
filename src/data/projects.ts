@@ -27,7 +27,7 @@ export const projects: Project[] = [
     description:
       "Ruby CVE auto-PR bot — Rails 8 app that detects vulnerabilities in Ruby bundled gems and prepares human-reviewable bump PRs. Conservative, fail-closed safety model with DeepSeek cross-checks.",
     url: "https://vulnsentry.com",
-    github: "https://github.com/dan1d/automatic-patch",
+    github: "https://github.com/dan1d/vulnsentry",
     tags: ["Rails 8", "Security", "Automation", "Ruby"],
     featured: true,
   },

@@ -3,6 +3,7 @@ import Projects from "@/components/sections/Projects";
 import ARExperience from "@/components/sections/ARExperience";
 import GitHubSkyline from "@/components/sections/GitHubSkyline";
 import Resume from "@/components/sections/Resume";
+import MatrixResume from "@/components/sections/MatrixResume";
 
 export default function Home() {
   return (
@@ -11,11 +12,12 @@ export default function Home() {
       <Projects />
       <GitHubSkyline />
       <Resume />
+      <MatrixResume />
       <ARExperience />
-      <footer className="border-t border-white/10 bg-black px-6 py-12 text-center text-sm text-slate-500">
-        <p>
+      <footer className="relative z-[2] border-t border-green-400/15 bg-black px-6 py-12 text-center font-mono">
+        <p className="text-[11px] text-green-400/30 tracking-wider">
           &copy; {new Date().getFullYear()} dan1d.dev — Built with Next.js,
-          Three.js &amp; AR
+          Three.js &amp; WebXR
         </p>
       </footer>
     </main>

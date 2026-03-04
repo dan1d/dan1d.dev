@@ -2,8 +2,12 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import Hero from "./Hero";
 
-// Mock HeroScene since it uses WebGL/R3F Canvas which can't render in jsdom
+// Mock 3D scenes since they use WebGL/R3F Canvas which can't render in jsdom
 vi.mock("@/components/three/HeroScene", () => ({
+  default: () => <div data-testid="hero-canvas" aria-hidden="true" />,
+}));
+
+vi.mock("@/components/three/MatrixCorridorScene", () => ({
   default: () => <div data-testid="hero-canvas" aria-hidden="true" />,
 }));
 

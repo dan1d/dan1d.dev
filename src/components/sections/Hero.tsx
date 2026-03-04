@@ -1,53 +1,97 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
-import gsap from "gsap";
 import { siteConfig } from "@/data/projects";
 
-// Dynamically import the 3D scene to avoid SSR issues
-const HeroScene = dynamic(() => import("@/components/three/HeroScene"), {
-  ssr: false,
-  loading: () => <div data-testid="hero-canvas" className="absolute inset-0" />,
-});
+const MatrixCorridorScene = dynamic(
+  () => import("@/components/three/MatrixCorridorScene"),
+  {
+    ssr: false,
+    loading: () => (
+      <div data-testid="hero-canvas" className="absolute inset-0 bg-black" />
+    ),
+  }
+);
 
 export default function Hero() {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const descRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
+  const [introComplete, setIntroComplete] = useState(false);
+  const [sceneVisible, setSceneVisible] = useState(false);
 
-  // Entrance animation (already present)
+  const handleIntroComplete = useCallback(() => setIntroComplete(true), []);
+
+  // Fade in the corridor from black after a short delay
   useEffect(() => {
-    const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-
-    tl.fromTo(
-      headingRef.current,
-      { opacity: 0, y: 40 },
-      { opacity: 1, y: 0, duration: 0.9 }
-    )
-      .fromTo(
-        subtitleRef.current,
-        { opacity: 0, y: 24 },
-        { opacity: 1, y: 0, duration: 0.7 },
-        "-=0.5"
-      )
-      .fromTo(
-        descRef.current,
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 0.7 },
-        "-=0.4"
-      )
-      .fromTo(
-        ctaRef.current,
-        { opacity: 0, y: 16 },
-        { opacity: 1, y: 0, duration: 0.6 },
-        "-=0.3"
-      );
+    const timer = setTimeout(() => setSceneVisible(true), 400);
+    return () => clearTimeout(timer);
   }, []);
 
-  // Parallax effect: 3D canvas scrolls at 40% of scroll speed
+  // Reveal UI elements after cinematic intro completes
+  useEffect(() => {
+    if (!introComplete) return;
+
+    let ctx: { revert: () => void } | null = null;
+
+    const animate = async () => {
+      try {
+        const { default: gsap } = await import("gsap");
+
+        ctx = gsap.context(() => {
+          const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+          // Darken corridor for text readability
+          if (overlayRef.current) {
+            tl.to(overlayRef.current, { opacity: 1, duration: 1.0 }, 0);
+          }
+
+          tl.fromTo(
+            headingRef.current,
+            { opacity: 0, y: 50, scale: 0.9 },
+            { opacity: 1, y: 0, scale: 1, duration: 1.2 },
+            0.3
+          )
+            .fromTo(
+              subtitleRef.current,
+              { opacity: 0, y: 30 },
+              { opacity: 1, y: 0, duration: 0.8 },
+              0.8
+            )
+            .fromTo(
+              descRef.current,
+              { opacity: 0, y: 24 },
+              { opacity: 1, y: 0, duration: 0.8 },
+              1.1
+            )
+            .fromTo(
+              ctaRef.current,
+              { opacity: 0, y: 20 },
+              { opacity: 1, y: 0, duration: 0.7 },
+              1.4
+            );
+        });
+      } catch {
+        // GSAP not available — just show everything
+        [headingRef, subtitleRef, descRef, ctaRef].forEach((ref) => {
+          if (ref.current) ref.current.style.opacity = "1";
+        });
+        if (overlayRef.current) overlayRef.current.style.opacity = "1";
+      }
+    };
+
+    animate();
+
+    return () => {
+      ctx?.revert();
+    };
+  }, [introComplete]);
+
+  // Parallax scroll effect (after intro)
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -75,7 +119,7 @@ export default function Hero() {
           });
         });
       } catch {
-        // GSAP not available in test/SSR — skip
+        // GSAP not available in test/SSR
       }
     };
 
@@ -86,73 +130,123 @@ export default function Hero() {
     };
   }, []);
 
+  // Fallback: force intro complete after 12s
+  useEffect(() => {
+    const timeout = setTimeout(() => setIntroComplete(true), 12000);
+    return () => clearTimeout(timeout);
+  }, []);
+
   return (
     <section
       id="hero"
       className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black"
     >
-      {/* 3D background scene — wrapped for parallax */}
+      {/* 3D Matrix corridor — fills entire hero */}
       <div ref={canvasWrapperRef} className="absolute inset-0">
-        <HeroScene />
+        <MatrixCorridorScene onIntroComplete={handleIntroComplete} />
       </div>
 
-      {/* Dark gradient overlay so text remains readable */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 pointer-events-none" />
+      {/* Fade-in from black (covers the first moment while WebGL initializes) */}
+      <div
+        className={`absolute inset-0 bg-black pointer-events-none z-20 transition-opacity duration-[2000ms] ease-out ${
+          sceneVisible ? "opacity-0" : "opacity-100"
+        }`}
+        aria-hidden="true"
+      />
 
-      {/* Hero content */}
+      {/* Darkening overlay for text readability (animated by GSAP on intro complete) */}
+      <div
+        ref={overlayRef}
+        className="absolute inset-0 pointer-events-none z-[5] opacity-0"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, rgba(0,0,0,0.35) 20%, rgba(0,0,0,0.75) 100%)",
+        }}
+        aria-hidden="true"
+      />
+
+      {/* CRT scanline overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.03] z-[6]"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,65,0.1) 2px, rgba(0,255,65,0.1) 4px)",
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Hero content — always in DOM (for tests), animated visible after intro */}
       <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto">
-        {/* Main heading */}
         <h1
           ref={headingRef}
-          className="text-8xl md:text-[10rem] font-black tracking-tighter leading-none mb-4 opacity-0"
+          className="text-8xl md:text-[10rem] font-black tracking-tighter leading-none mb-6 opacity-0 font-mono"
           style={{
-            background: "linear-gradient(135deg, #06b6d4 0%, #8b5cf6 60%, #06b6d4 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
+            color: "#00ff41",
+            textShadow:
+              "0 0 20px #00ff41, 0 0 60px #00ff4160, 0 0 120px #00ff4130",
           }}
         >
           {siteConfig.handle}
         </h1>
 
-        {/* Subtitle */}
         <p
           ref={subtitleRef}
-          className="text-2xl md:text-3xl font-semibold text-slate-200 tracking-wide mb-4 opacity-0"
+          className="text-xl md:text-2xl font-mono tracking-wider mb-4 opacity-0"
+          style={{ color: "#39ff14", textShadow: "0 0 8px #39ff14" }}
         >
           {siteConfig.title}
         </p>
 
-        {/* Description */}
         <p
           ref={descRef}
-          className="text-base md:text-lg text-slate-400 max-w-xl leading-relaxed mb-10 opacity-0"
+          className="text-sm md:text-base font-mono text-green-400/60 max-w-xl leading-relaxed mb-10 opacity-0"
         >
           {siteConfig.description}
         </p>
 
         {/* CTA buttons */}
-        <div ref={ctaRef} className="flex flex-col sm:flex-row gap-4 opacity-0">
-          {/* Primary CTA */}
+        <div
+          ref={ctaRef}
+          className="flex flex-col sm:flex-row gap-4 opacity-0"
+        >
           <a
             href="#projects"
-            className="inline-flex items-center justify-center px-8 py-3.5 rounded-full font-semibold text-sm tracking-wide text-black bg-cyan-400 hover:bg-cyan-300 transition-colors duration-200 shadow-lg shadow-cyan-500/30"
+            aria-label="View Projects"
+            className="inline-flex items-center justify-center px-8 py-3.5 font-mono text-sm tracking-widest border border-green-400/60 text-green-400 hover:border-green-400 hover:bg-green-400/10 hover:shadow-[0_0_20px_rgba(0,255,65,0.2)] transition-all duration-300"
           >
-            View Projects
+            <span className="text-green-400/50 mr-1" aria-hidden="true">
+              [
+            </span>
+            VIEW_PROJECTS
+            <span className="text-green-400/50 ml-1" aria-hidden="true">
+              ]
+            </span>
           </a>
 
-          {/* Secondary CTA */}
           <a
             href="#ar"
-            className="inline-flex items-center justify-center px-8 py-3.5 rounded-full font-semibold text-sm tracking-wide text-cyan-400 border border-cyan-400/60 hover:border-cyan-400 hover:bg-cyan-400/10 transition-all duration-200"
+            aria-label="Try AR Experience"
+            className="inline-flex items-center justify-center px-8 py-3.5 font-mono text-sm tracking-widest border border-green-400/30 text-green-400/70 hover:border-green-400/60 hover:text-green-400 hover:bg-green-400/5 transition-all duration-300"
           >
-            Try AR Experience
+            <span className="text-green-400/30 mr-1" aria-hidden="true">
+              [
+            </span>
+            ENTER_THE_MATRIX
+            <span className="text-green-400/30 ml-1" aria-hidden="true">
+              ]
+            </span>
           </a>
         </div>
       </div>
 
-      {/* Bottom fade to next section */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black to-transparent pointer-events-none" />
+      {/* Bottom gradient fade to next section */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent pointer-events-none z-[7]" />
+
+      {/* CRT frame corner brackets */}
+      <div className="absolute top-6 left-6 w-8 h-8 border-t-2 border-l-2 border-green-400/40 pointer-events-none z-[6]" />
+      <div className="absolute top-6 right-6 w-8 h-8 border-t-2 border-r-2 border-green-400/40 pointer-events-none z-[6]" />
+      <div className="absolute bottom-6 left-6 w-8 h-8 border-b-2 border-l-2 border-green-400/30 pointer-events-none z-[6]" />
+      <div className="absolute bottom-6 right-6 w-8 h-8 border-b-2 border-r-2 border-green-400/30 pointer-events-none z-[6]" />
     </section>
   );
 }
