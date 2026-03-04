@@ -4,9 +4,19 @@ import { skills, siteConfig } from "@/data/projects";
 
 const recentRoles = [
   {
+    company: "BioBridge",
+    title: "Sr Full-Stack Engineer",
+    period: "2024 – Present",
+    highlights: [
+      "Led development of cardiac remote monitoring platform for clinicians",
+      "Designed health status & incident reporting system (AWS Health-style)",
+      "Built real-time device data ingestion and patient monitoring workflows",
+    ],
+  },
+  {
     company: "Acima Credit",
     title: "Sr Software Engineer",
-    period: "2022 – 2024",
+    period: "2021 – 2024",
     highlights: [
       "Led Ruby on Rails + React platform serving 1M+ users",
       "Architected microservices reducing latency by 40%",
@@ -16,7 +26,7 @@ const recentRoles = [
   {
     company: "2U",
     title: "Sr Software Engineer",
-    period: "2020 – 2022",
+    period: "2019 – 2021",
     highlights: [
       "Built edtech platform used by 100k+ learners globally",
       "Implemented GraphQL API layer with TypeScript",
@@ -33,20 +43,20 @@ export default function Resume() {
     >
       {/* Ambient glow background */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(139,92,246,0.03)_0%,_transparent_70%)]" />
+        <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-green-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-lime-500/10 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(57,255,20,0.03)_0%,_transparent_70%)]" />
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         {/* Section header */}
         <div className="text-center mb-16">
-          <span className="inline-block text-xs font-semibold tracking-widest text-purple-400 uppercase mb-4 px-3 py-1 rounded-full border border-purple-400/30 bg-purple-400/5">
+          <span className="inline-block text-xs font-semibold tracking-widest text-lime-400 uppercase mb-4 px-3 py-1 rounded-full border border-lime-400/30 bg-lime-400/5">
             Open to Opportunities
           </span>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white mb-6">
             My{" "}
-            <span className="bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
               Resume
             </span>
           </h2>
@@ -64,7 +74,7 @@ export default function Resume() {
             <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 space-y-4">
               <div className="flex items-center gap-4">
                 <div className="flex flex-col">
-                  <span className="text-4xl font-black bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+                  <span className="text-4xl font-black bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
                     12+ years
                   </span>
                   <span className="text-sm text-white/50 mt-1">
@@ -76,7 +86,7 @@ export default function Resume() {
               <div className="h-px bg-white/10" />
 
               <div>
-                <p className="text-xs text-cyan-400 font-semibold tracking-widest uppercase mb-1">
+                <p className="text-xs text-green-400 font-semibold tracking-widest uppercase mb-1">
                   Current Title
                 </p>
                 <p className="text-lg font-semibold text-white">
@@ -90,14 +100,14 @@ export default function Resume() {
 
             {/* Skills pills */}
             <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6">
-              <p className="text-xs text-purple-400 font-semibold tracking-widest uppercase mb-4">
+              <p className="text-xs text-lime-400 font-semibold tracking-widest uppercase mb-4">
                 Key Skills
               </p>
               <div className="flex flex-wrap gap-2">
                 {skills.map((skill) => (
                   <span
                     key={skill}
-                    className="px-3 py-1.5 text-xs font-medium rounded-full border border-cyan-400/20 bg-cyan-400/5 text-cyan-300 transition-all duration-200 hover:border-cyan-400/50 hover:bg-cyan-400/10 hover:scale-105"
+                    className="px-3 py-1.5 text-xs font-medium rounded-full border border-green-400/20 bg-green-400/5 text-green-300 transition-all duration-200 hover:border-green-400/50 hover:bg-green-400/10 hover:scale-105"
                   >
                     {skill}
                   </span>
@@ -107,7 +117,7 @@ export default function Resume() {
 
             {/* Recent roles */}
             <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 space-y-6">
-              <p className="text-xs text-purple-400 font-semibold tracking-widest uppercase">
+              <p className="text-xs text-lime-400 font-semibold tracking-widest uppercase">
                 Recent Roles
               </p>
               {recentRoles.map((role) => (
@@ -117,7 +127,7 @@ export default function Resume() {
                       <p className="text-sm font-bold text-white">
                         {role.company}
                       </p>
-                      <p className="text-xs text-cyan-400">{role.title}</p>
+                      <p className="text-xs text-green-400">{role.title}</p>
                     </div>
                     <span className="text-xs text-white/40 whitespace-nowrap mt-0.5">
                       {role.period}
@@ -129,7 +139,7 @@ export default function Resume() {
                         key={highlight}
                         className="flex items-start gap-2 text-xs text-white/50"
                       >
-                        <span className="text-cyan-400 mt-0.5 shrink-0">
+                        <span className="text-green-400 mt-0.5 shrink-0">
                           ›
                         </span>
                         {highlight}
@@ -146,7 +156,7 @@ export default function Resume() {
             {/* Card header */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 bg-white/5">
               <div className="flex items-center gap-2">
-                <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                 <span className="text-xs text-white/50 font-mono">
                   resume.pdf
                 </span>
@@ -164,18 +174,7 @@ export default function Resume() {
                   border: "none",
                   borderRadius: "0 0 1rem 1rem",
                 }}
-              >
-                <p className="p-4 text-white/50 text-sm">
-                  Your browser does not support embedded PDF viewing.{" "}
-                  <a
-                    href="/resume.pdf"
-                    className="text-cyan-400 underline hover:text-cyan-300"
-                  >
-                    Download the PDF
-                  </a>{" "}
-                  to view it.
-                </p>
-              </iframe>
+              />
             </div>
           </div>
         </div>
@@ -185,10 +184,10 @@ export default function Resume() {
           <a
             href="/resume.pdf"
             download
-            className="group relative inline-flex items-center gap-3 px-8 py-4 rounded-full font-semibold text-white overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25"
+            className="group relative inline-flex items-center gap-3 px-8 py-4 rounded-full font-semibold text-white overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/25"
           >
             <span
-              className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full"
+              className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full"
               aria-hidden="true"
             />
             <span
@@ -216,7 +215,7 @@ export default function Resume() {
           <a
             href="/ar?view=resume"
             data-testid="resume-ar-btn"
-            className="group inline-flex items-center gap-3 px-8 py-4 rounded-full font-semibold text-white/80 border border-white/20 bg-white/5 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-purple-400/40 hover:text-white hover:bg-white/10"
+            className="group inline-flex items-center gap-3 px-8 py-4 rounded-full font-semibold text-white/80 border border-white/20 bg-white/5 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-lime-400/40 hover:text-white hover:bg-white/10"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -226,7 +225,7 @@ export default function Resume() {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-purple-400"
+              className="w-5 h-5 text-lime-400"
               aria-hidden="true"
             >
               <path d="M3 7V5a2 2 0 0 1 2-2h2" />

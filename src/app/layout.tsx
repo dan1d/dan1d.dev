@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/ui/Navbar";
 import PageLoader from "@/components/ui/PageLoader";
 import Instructions from "@/components/ui/Instructions";
+import GlobalMatrixRain from "@/components/ui/GlobalMatrixRain";
 import { siteConfig } from "@/data/projects";
 
 const geistSans = Geist({
@@ -29,10 +30,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased matrix-scanlines`}
       >
         <PageLoader />
         <Navbar />
+        <GlobalMatrixRain />
         <Instructions />
         {children}
       </body>

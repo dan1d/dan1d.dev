@@ -59,16 +59,17 @@ describe("Projects section", () => {
 
   it("renders project tags (SaaS, AI, etc.)", () => {
     render(<Projects />);
-    expect(screen.getByText("SaaS")).toBeInTheDocument();
-    expect(screen.getByText("AI")).toBeInTheDocument();
-    expect(screen.getByText("Knowledge Graph")).toBeInTheDocument();
-    expect(screen.getByText("Engineering")).toBeInTheDocument();
+    const codeprismCard = screen.getByText("CodePrism").closest("article")!;
+    expect(within(codeprismCard).getByText("SaaS")).toBeInTheDocument();
+    expect(within(codeprismCard).getByText("AI")).toBeInTheDocument();
+    expect(within(codeprismCard).getByText("Knowledge Graph")).toBeInTheDocument();
+    expect(within(codeprismCard).getByText("Engineering")).toBeInTheDocument();
   });
 
   it("featured projects have a featured badge with data-testid='featured-badge'", () => {
     render(<Projects />);
-    const badge = screen.getByTestId("featured-badge");
-    expect(badge).toBeInTheDocument();
+    const badges = screen.getAllByTestId("featured-badge");
+    expect(badges.length).toBeGreaterThanOrEqual(1);
   });
 
   it("each project card has a 'View in AR' button with data-testid='ar-view-btn'", () => {
@@ -79,8 +80,9 @@ describe("Projects section", () => {
 
   it("'View in AR' button is accessible with an aria-label", () => {
     render(<Projects />);
-    const arButton = screen.getByTestId("ar-view-btn");
-    expect(arButton).toHaveAttribute("aria-label");
+    const arButtons = screen.getAllByTestId("ar-view-btn");
+    expect(arButtons.length).toBeGreaterThan(0);
+    arButtons.forEach((btn) => expect(btn).toHaveAttribute("aria-label"));
   });
 
   it("renders a grid container for project cards", () => {

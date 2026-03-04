@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { projects, openSourceProjects } from "@/data/projects";
+import { projects, openSourceProjects, railsContributions } from "@/data/projects";
 import ProjectCard from "@/components/ui/ProjectCard";
 
 export default function Projects() {
@@ -64,7 +64,7 @@ export default function Projects() {
     >
       {/* Subtle background gradient */}
       <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-cyan-950/10 to-transparent"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-green-950/10 to-transparent"
         aria-hidden="true"
       />
 
@@ -75,9 +75,12 @@ export default function Projects() {
             Projects
           </h2>
           {/* Gradient underline */}
-          <div className="mt-3 mx-auto h-1 w-20 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500" />
+          <div className="mt-3 mx-auto h-1 w-20 rounded-full bg-gradient-to-r from-green-400 to-emerald-500" />
           <p className="mt-4 text-white/50 text-base max-w-xl mx-auto">
             Things I&apos;ve built — from AI-powered tools to augmented reality experiences.
+          </p>
+          <p className="mt-2">
+            <span className="text-green-400/60 font-mono">&gt; Inevitable, Mr. Anderson.</span>
           </p>
         </div>
 
@@ -131,7 +134,7 @@ export default function Projects() {
                 <article
                   key={project.id}
                   data-testid="open-source-card"
-                  className="group relative flex flex-col rounded-xl bg-white/4 backdrop-blur border border-white/8 p-5 transition-all duration-300 hover:border-purple-500/50 hover:shadow-[0_0_20px_0_rgba(139,92,246,0.10)]"
+                  className="group relative flex flex-col rounded-xl bg-white/4 backdrop-blur border border-white/8 p-5 transition-all duration-300 hover:border-lime-500/50 hover:shadow-[0_0_20px_0_rgba(57,255,20,0.10)]"
                 >
                   {/* Title */}
                   <h4 className="text-base font-bold text-white mb-1.5">
@@ -166,7 +169,7 @@ export default function Projects() {
                         rel="noopener noreferrer"
                         aria-label={`View ${project.title} on GitHub`}
                         data-testid="github-link"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-purple-400/50 transition-colors duration-200"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-lime-400/50 transition-colors duration-200"
                       >
                         {/* GitHub icon */}
                         <svg
@@ -187,13 +190,62 @@ export default function Projects() {
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`Visit ${project.title}`}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-cyan-500/80 to-purple-600/80 text-white hover:opacity-90 transition-opacity duration-200"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-green-500/80 to-emerald-600/80 text-white hover:opacity-90 transition-opacity duration-200"
                       >
                         Visit
                       </a>
                     )}
                   </div>
                 </article>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Rails Contributions */}
+        {railsContributions.length > 0 && (
+          <div className="mt-16" data-testid="rails-contributions-section">
+            <h3 className="text-xl font-semibold text-white/80 mb-6 flex items-center gap-3">
+              <span className="h-px flex-1 bg-white/10" />
+              {/* Rails diamond icon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-5 h-5 text-red-400/70"
+                aria-hidden="true"
+              >
+                <path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z" />
+              </svg>
+              Rails Contributions
+              <span className="h-px flex-1 bg-white/10" />
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {railsContributions.map((pr) => (
+                <a
+                  key={pr.id}
+                  href={pr.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid="rails-contribution-card"
+                  className="group flex flex-col rounded-xl bg-white/4 backdrop-blur border border-white/8 p-5 transition-all duration-300 hover:border-red-400/40 hover:shadow-[0_0_20px_0_rgba(248,113,113,0.08)]"
+                >
+                  <div className="flex items-start gap-3 mb-2">
+                    <span className="shrink-0 mt-0.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-500/15 text-red-400 border border-red-400/20">
+                      PR
+                    </span>
+                    <h4 className="text-sm font-bold text-white group-hover:text-red-300 transition-colors">
+                      {pr.title}
+                    </h4>
+                  </div>
+                  <p className="text-xs text-white/50 leading-relaxed">
+                    {pr.description}
+                  </p>
+                </a>
               ))}
             </div>
           </div>
