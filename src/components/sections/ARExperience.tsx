@@ -5,25 +5,20 @@ import dynamic from "next/dynamic";
 
 // ─── Visibility hook — only mount WebGL when near viewport ───────────────────
 
-function useLazyMount(rootMargin = "400px") {
+function useCanvasVisibility(rootMargin = "200px") {
   const ref = useRef<HTMLElement>(null);
-  const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
-    if (!el || mounted) return;
+    if (!el) return;
     const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setMounted(true);
-          io.disconnect();
-        }
-      },
+      ([entry]) => setVisible(entry.isIntersecting),
       { rootMargin }
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [rootMargin, mounted]);
-  return { ref, mounted };
+  }, [rootMargin]);
+  return { ref, visible };
 }
 import { QRCodeSVG } from "qrcode.react";
 
@@ -53,7 +48,7 @@ const steps = [
 ];
 
 export default function ARExperience() {
-  const { ref: sectionRef, mounted: canvasMounted } = useLazyMount("400px");
+  const { ref: sectionRef, visible: canvasVisible } = useCanvasVisibility("400px");
   const leftPanelRef = useRef<HTMLDivElement>(null);
   const rightPanelRef = useRef<HTMLDivElement>(null);
   const stepsRef = useRef<HTMLOListElement>(null);
@@ -336,7 +331,7 @@ export default function ARExperience() {
 
             {/* R3F Canvas — only mounts when section is near viewport */}
             <div className="absolute inset-0">
-              {canvasMounted ? <ARPreviewScene /> : <div className="w-full h-full bg-black" />}
+              {canvasVisible ? <ARPreviewScene /> : <div className="w-full h-full bg-black" />}
             </div>
 
             {/* Bottom label */}

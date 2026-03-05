@@ -199,7 +199,7 @@ export default function Hero() {
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const [introComplete, setIntroComplete] = useState(false);
   const [showWakeUp, setShowWakeUp] = useState(false);
-  const { ref: sectionVisRef, visible: canvasVisible } = useCanvasVisibility("400px");
+  const { ref: sectionVisRef, visible: canvasVisible } = useCanvasVisibility("0px");
 
   const handleIntroComplete = useCallback(() => setIntroComplete(true), []);
 

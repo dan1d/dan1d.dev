@@ -5,25 +5,20 @@ import dynamic from "next/dynamic";
 
 // ─── Visibility hook — only mount WebGL when near viewport ───────────────────
 
-function useLazyMount(rootMargin = "400px") {
+function useCanvasVisibility(rootMargin = "200px") {
   const ref = useRef<HTMLElement>(null);
-  const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
-    if (!el || mounted) return;
+    if (!el) return;
     const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setMounted(true);
-          io.disconnect(); // once mounted, stay mounted forever
-        }
-      },
+      ([entry]) => setVisible(entry.isIntersecting),
       { rootMargin }
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [rootMargin, mounted]);
-  return { ref, mounted };
+  }, [rootMargin]);
+  return { ref, visible };
 }
 import type { SkylineCell } from "@/components/three/SkylineScene";
 
@@ -145,7 +140,7 @@ export default function GitHubSkyline() {
   const [coords, setCoords] = useState<"geo" | "sector">("geo");
   const [flickerVisible, setFlickerVisible] = useState(true);
 
-  const { ref: sectionRef, mounted: canvasMounted } = useLazyMount("400px");
+  const { ref: sectionRef, visible: canvasVisible } = useCanvasVisibility("400px");
   const canvasCardRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
 
@@ -479,14 +474,14 @@ export default function GitHubSkyline() {
             </span>
           </div>
 
-          {/* ── Canvas — lazy-mounts when section nears viewport, stays mounted ── */}
+          {/* ── Canvas — mounts when section is near viewport ── */}
           <div className="absolute inset-0 z-[1]">
             {loading ? (
               <SkylineSkeleton />
-            ) : canvasMounted ? (
+            ) : canvasVisible ? (
               <SkylineScene data={contributions} onHover={setHoveredCell} />
             ) : (
-              <div className="w-full h-full bg-black" />
+              <SkylineSkeleton />
             )}
           </div>
 
