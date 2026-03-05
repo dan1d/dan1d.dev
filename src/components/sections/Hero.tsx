@@ -68,10 +68,112 @@ function WakeUpText({ show }: { show: boolean }) {
   );
 }
 
+// ─── Matrix Quotes ───────────────────────────────────────────────────────────
+
+const MATRIX_QUOTES = [
+  "Follow the white rabbit",
+  "There is no spoon",
+  "The Matrix has you",
+  "Free your mind",
+  "I know kung fu",
+  "Welcome to the real world",
+  "What is the Matrix?",
+  "Ignorance is bliss",
+  "Everything that has a beginning has an end",
+  "The answer is out there",
+  "Choice is an illusion",
+  "Not all those who wander are lost",
+];
+
+function MatrixQuotes({ show }: { show: boolean }) {
+  const [index, setIndex] = useState(0);
+  const [phase, setPhase] = useState<"idle" | "reveal" | "hold" | "dissolve" | "gap">("idle");
+  const [visibleCount, setVisibleCount] = useState(0);
+
+  useEffect(() => {
+    if (!show || phase !== "idle") return;
+    const timer = setTimeout(() => setPhase("reveal"), 500);
+    return () => clearTimeout(timer);
+  }, [show, phase]);
+
+  useEffect(() => {
+    if (phase === "idle") return;
+
+    const quote = MATRIX_QUOTES[index];
+    let timer: ReturnType<typeof setTimeout>;
+
+    switch (phase) {
+      case "reveal": {
+        // Reveal letters one by one from left
+        if (visibleCount < quote.length) {
+          timer = setTimeout(() => setVisibleCount((c) => c + 1), 40);
+        } else {
+          timer = setTimeout(() => setPhase("hold"), 100);
+        }
+        break;
+      }
+      case "hold":
+        timer = setTimeout(() => {
+          setPhase("dissolve");
+          setVisibleCount(quote.length);
+        }, 2500);
+        break;
+      case "dissolve": {
+        // Remove letters one by one from right
+        if (visibleCount > 0) {
+          timer = setTimeout(() => setVisibleCount((c) => c - 1), 30);
+        } else {
+          timer = setTimeout(() => {
+            setIndex((i) => (i + 1) % MATRIX_QUOTES.length);
+            setPhase("gap");
+          }, 100);
+        }
+        break;
+      }
+      case "gap":
+        timer = setTimeout(() => {
+          setVisibleCount(0);
+          setPhase("reveal");
+        }, 800);
+        break;
+    }
+
+    return () => clearTimeout(timer);
+  }, [phase, visibleCount, index]);
+
+  if (phase === "idle") return null;
+
+  const quote = MATRIX_QUOTES[index];
+
+  return (
+    <div className="h-6 flex items-center justify-center">
+      <p className="font-mono text-xs md:text-sm tracking-[0.25em] uppercase whitespace-nowrap">
+        {quote.split("").map((char, i) => {
+          const visible = phase === "dissolve"
+            ? i < visibleCount
+            : i < visibleCount;
+          return (
+            <span
+              key={`${index}-${i}`}
+              style={{
+                color: "#00ff41",
+                textShadow: "0 0 6px #00ff4150",
+                opacity: visible ? 0.6 : 0,
+                transition: "opacity 120ms ease",
+              }}
+            >
+              {char}
+            </span>
+          );
+        })}
+      </p>
+    </div>
+  );
+}
+
 // ─── Hero ────────────────────────────────────────────────────────────────────
 
 export default function Hero() {
-  const headingRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const descRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -107,16 +209,10 @@ export default function Hero() {
           }
 
           tl.fromTo(
-            headingRef.current,
-            { opacity: 0, y: 50, scale: 0.9 },
-            { opacity: 1, y: 0, scale: 1, duration: 1.2 },
-            0.3
-          )
-            .fromTo(
               subtitleRef.current,
               { opacity: 0, y: 30 },
               { opacity: 1, y: 0, duration: 0.8 },
-              0.8
+              0.3
             )
             .fromTo(
               descRef.current,
@@ -133,7 +229,7 @@ export default function Hero() {
         });
       } catch {
         // GSAP not available — just show everything
-        [headingRef, subtitleRef, descRef, ctaRef].forEach((ref) => {
+        [subtitleRef, descRef, ctaRef].forEach((ref) => {
           if (ref.current) ref.current.style.opacity = "1";
         });
         if (overlayRef.current) overlayRef.current.style.opacity = "1";
@@ -228,18 +324,10 @@ export default function Hero() {
 
       {/* Hero content — always in DOM (for tests), animated visible after intro */}
       <div className="absolute inset-0 z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto">
-        {/* dan1d — upper area, clear of the coder */}
-        <h1
-          ref={headingRef}
-          className="text-8xl md:text-[10rem] font-black tracking-tighter leading-none opacity-0 font-mono mt-[15vh] md:mt-[12vh]"
-          style={{
-            color: "#00ff41",
-            textShadow:
-              "0 0 20px #00ff41, 0 0 60px #00ff4160, 0 0 120px #00ff4130",
-          }}
-        >
-          {siteConfig.handle}
-        </h1>
+        {/* Rotating Matrix quotes — upper area */}
+        <div className="mt-[15vh] md:mt-[12vh]">
+          <MatrixQuotes show={introComplete} />
+        </div>
 
         {/* Subtitle, description, buttons — pushed to bottom 20% */}
         <div className="mt-auto mb-[10vh] md:mb-[8vh] flex flex-col items-center">
