@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/ui/Navbar";
-import PageLoader from "@/components/ui/PageLoader";
+
 import Instructions from "@/components/ui/Instructions";
 import GlobalMatrixRain from "@/components/ui/GlobalMatrixRain";
 import { siteConfig } from "@/data/projects";
@@ -32,7 +32,6 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased matrix-scanlines`}
       >
-        <PageLoader />
         <Navbar />
         <GlobalMatrixRain />
         <Instructions />

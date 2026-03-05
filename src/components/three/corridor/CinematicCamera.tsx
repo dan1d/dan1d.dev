@@ -5,26 +5,16 @@ import * as THREE from "three";
 export interface CinematicCameraProps {
   onIntroComplete?: () => void;
   chromaticOffset: THREE.Vector2;
-  /** When true, the camera intro animation begins. Until then, camera stays at z=5. */
-  started?: boolean;
 }
 
-export function CinematicCamera({ onIntroComplete, chromaticOffset, started }: CinematicCameraProps) {
+export function CinematicCamera({ onIntroComplete, chromaticOffset }: CinematicCameraProps) {
   const { camera } = useThree();
   const doneRef = useRef(false);
-  const t0Ref = useRef(-1);
   // Earthquake state: intensity decays over time, triggered randomly
   const quakeRef = useRef({ intensity: 0, nextAt: 12 });
 
   useFrame(({ clock }) => {
-    // Don't start the intro until the scene is visible
-    if (!started) {
-      camera.position.set(0, 0, 5);
-      camera.lookAt(0, 0, -5);
-      return;
-    }
-    if (t0Ref.current < 0) t0Ref.current = clock.elapsedTime;
-    const t = clock.elapsedTime - t0Ref.current;
+    const t = clock.elapsedTime;
 
     let x = 0, y = 0, z = 5;
     let caX = 0.0006, caY = 0.0006;

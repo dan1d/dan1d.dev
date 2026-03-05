@@ -2,98 +2,30 @@
 
 import { useEffect, useRef, useState } from "react";
 import { smoothstep } from "@/lib/matrix";
-import MatrixTextReveal, { type RevealPhase } from "./MatrixTextReveal";
+import MatrixTextReveal from "./MatrixTextReveal";
 
-// ─── Phases ─────────────────────────────────────────────────────────────────
-type Phase = "rain_in" | "text_form" | "text_hold" | "rain_close" | "fade_out";
+// ─── Page Loader — just rain, no text ────────────────────────────────────────
+// Rain builds up fast, holds briefly, then fades out revealing the corridor behind.
 
-const PHASE_DURATIONS: Record<Phase, number> = {
-  rain_in: 1200,
-  text_form: 1800,
-  text_hold: 1000,
-  rain_close: 800,
-  fade_out: 1000,
-};
-
-const PHASE_ORDER: Phase[] = ["rain_in", "text_form", "text_hold", "rain_close", "fade_out"];
-
-// ─── Map internal phases → MatrixTextReveal props ───────────────────────────
-
-function mapPhase(phase: Phase, progress: number): {
-  revealPhase: RevealPhase;
-  revealProgress: number;
-  rainIntensity: number;
-  rainSpeedMultiplier: number;
-} {
-  switch (phase) {
-    case "rain_in":
-      return {
-        revealPhase: "idle",
-        revealProgress: 0,
-        rainIntensity: smoothstep(progress),
-        rainSpeedMultiplier: 2.8,
-      };
-    case "text_form":
-      return {
-        revealPhase: "revealing",
-        revealProgress: progress,
-        rainIntensity: 1,
-        rainSpeedMultiplier: 1,
-      };
-    case "text_hold":
-      return {
-        revealPhase: "holding",
-        revealProgress: 1,
-        rainIntensity: 1,
-        rainSpeedMultiplier: 1,
-      };
-    case "rain_close":
-      return {
-        revealPhase: "dissolving",
-        revealProgress: progress,
-        rainIntensity: 1,
-        rainSpeedMultiplier: 1,
-      };
-    case "fade_out":
-      return {
-        revealPhase: "done",
-        revealProgress: 1,
-        rainIntensity: 1 - smoothstep(progress),
-        rainSpeedMultiplier: 1,
-      };
-  }
-}
-
-// ─── Page Loader ────────────────────────────────────────────────────────────
+const RAIN_IN = 1200;
+const FADE_OUT = 1300;
+const TOTAL = RAIN_IN + FADE_OUT;
 
 export default function PageLoader() {
   const [visible, setVisible] = useState(true);
-  const [phase, setPhase] = useState<Phase>("rain_in");
-  const [progress, setProgress] = useState(0);
-  const phaseStartRef = useRef(Date.now());
-  const phaseRef = useRef<Phase>("rain_in");
+  const startRef = useRef(Date.now());
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     let animId: number;
 
     const tick = () => {
-      const elapsed = Date.now() - phaseStartRef.current;
-      const duration = PHASE_DURATIONS[phaseRef.current];
-      const p = Math.min(1, elapsed / duration);
-      setProgress(p);
-
-      if (p >= 1) {
-        const idx = PHASE_ORDER.indexOf(phaseRef.current);
-        if (idx < PHASE_ORDER.length - 1) {
-          phaseRef.current = PHASE_ORDER[idx + 1];
-          setPhase(PHASE_ORDER[idx + 1]);
-          phaseStartRef.current = Date.now();
-        } else {
-          setVisible(false);
-          return;
-        }
+      const e = Date.now() - startRef.current;
+      setElapsed(e);
+      if (e >= TOTAL) {
+        setVisible(false);
+        return;
       }
-
       animId = requestAnimationFrame(tick);
     };
 
@@ -103,30 +35,31 @@ export default function PageLoader() {
 
   // Fallback timeout
   useEffect(() => {
-    const timeout = setTimeout(() => setVisible(false), 15000);
+    const timeout = setTimeout(() => setVisible(false), 10000);
     return () => clearTimeout(timeout);
   }, []);
 
   if (!visible) return null;
 
-  const isFadingOut = phase === "fade_out";
-  const smoothFade = isFadingOut ? 1 - smoothstep(progress) : 1;
-  const mapped = mapPhase(phase, progress);
+  const inFadeOut = elapsed > RAIN_IN;
+  const fadeProgress = inFadeOut ? Math.min(1, (elapsed - RAIN_IN) / FADE_OUT) : 0;
+  const rainInProgress = Math.min(1, elapsed / RAIN_IN);
+
+  const rainIntensity = inFadeOut ? 1 - smoothstep(fadeProgress) : smoothstep(rainInProgress);
+  const wrapperOpacity = inFadeOut ? 1 - smoothstep(fadeProgress) : 1;
 
   return (
     <div
       aria-hidden="true"
       className="fixed inset-0 z-[9999] bg-black"
-      style={{ opacity: smoothFade }}
+      style={{ opacity: wrapperOpacity }}
     >
       <MatrixTextReveal
-        text="Wake up, dan1d..."
-        phase={mapped.revealPhase}
-        progress={mapped.revealProgress}
-        revealDirection="ltr"
-        dissolveDirection="rtl"
-        rainIntensity={mapped.rainIntensity}
-        rainSpeedMultiplier={mapped.rainSpeedMultiplier}
+        text=""
+        phase="idle"
+        progress={0}
+        rainIntensity={rainIntensity}
+        rainSpeedMultiplier={inFadeOut ? 1 : 2.8}
       />
 
       {/* CRT scanlines */}

@@ -14,6 +14,62 @@ const MatrixCorridorScene = dynamic(
   }
 );
 
+// ─── "Wake up, dan1d..." typing overlay ──────────────────────────────────────
+
+function WakeUpText({ show }: { show: boolean }) {
+  const fullText = "Wake up, dan1d...";
+  const [displayed, setDisplayed] = useState("");
+  const [opacity, setOpacity] = useState(0);
+  const startedRef = useRef(false);
+
+  useEffect(() => {
+    if (!show || startedRef.current) return;
+    startedRef.current = true;
+
+    // Fade in
+    setOpacity(1);
+
+    // Type characters one by one
+    let i = 0;
+    const typeInterval = setInterval(() => {
+      i++;
+      setDisplayed(fullText.slice(0, i));
+      if (i >= fullText.length) {
+        clearInterval(typeInterval);
+        // Hold for 1.5s then fade out
+        setTimeout(() => setOpacity(0), 1500);
+      }
+    }, 80);
+
+    return () => clearInterval(typeInterval);
+  }, [show]);
+
+  if (!startedRef.current && !show) return null;
+
+  return (
+    <div
+      className="absolute inset-0 z-[8] flex items-center justify-center pointer-events-none"
+      style={{
+        opacity,
+        transition: "opacity 800ms ease-in-out",
+      }}
+    >
+      <p
+        className="font-mono text-lg md:text-2xl tracking-wider"
+        style={{
+          color: "#00ff41",
+          textShadow: "0 0 10px #00ff41, 0 0 30px #00ff4160",
+        }}
+      >
+        {displayed}
+        <span className="animate-pulse">_</span>
+      </p>
+    </div>
+  );
+}
+
+// ─── Hero ────────────────────────────────────────────────────────────────────
+
 export default function Hero() {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
@@ -22,15 +78,13 @@ export default function Hero() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const [introComplete, setIntroComplete] = useState(false);
-  const [sceneVisible, setSceneVisible] = useState(false);
+  const [showWakeUp, setShowWakeUp] = useState(false);
 
   const handleIntroComplete = useCallback(() => setIntroComplete(true), []);
 
-  // Fade in the corridor behind the PageLoader so it's fully ready when the loader disappears.
-  // PageLoader phases: rain_in(1200) + text_form(1800) + text_hold(1000) + rain_close(800) + fade_out(1000) = 5800ms
-  // Start corridor early so the 500ms CSS transition finishes before the PageLoader is gone.
+  // Show "Wake up, dan1d..." after camera passes through entrance wall (~2s into anim)
   useEffect(() => {
-    const timer = setTimeout(() => setSceneVisible(true), 4200);
+    const timer = setTimeout(() => setShowWakeUp(true), 2000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -143,18 +197,13 @@ export default function Hero() {
       id="hero"
       className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black"
     >
-      {/* 3D Matrix corridor — fills entire hero */}
+      {/* 3D Matrix corridor — starts immediately */}
       <div ref={canvasWrapperRef} className="absolute inset-0">
-        <MatrixCorridorScene onIntroComplete={handleIntroComplete} started={sceneVisible} />
+        <MatrixCorridorScene onIntroComplete={handleIntroComplete} />
       </div>
 
-      {/* Fade-in from black (covers the first moment while WebGL initializes) */}
-      <div
-        className={`absolute inset-0 bg-black pointer-events-none z-20 transition-opacity duration-500 ease-out ${
-          sceneVisible ? "opacity-0" : "opacity-100"
-        }`}
-        aria-hidden="true"
-      />
+      {/* "Wake up, dan1d..." typing text — appears after camera passes entrance wall */}
+      <WakeUpText show={showWakeUp} />
 
       {/* Darkening overlay for text readability (animated by GSAP on intro complete) */}
       <div

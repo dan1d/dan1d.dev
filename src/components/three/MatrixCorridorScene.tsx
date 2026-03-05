@@ -42,7 +42,7 @@ class CanvasErrorBoundary extends Component<
 
 // ─── Main Corridor Scene ────────────────────────────────────────────────────
 
-function CorridorScene({ onIntroComplete, started }: { onIntroComplete?: () => void; started?: boolean }) {
+function CorridorScene({ onIntroComplete }: { onIntroComplete?: () => void }) {
   const atlas = useMemo(() => buildGlyphAtlas(), []);
   const caOffset = useMemo(() => new THREE.Vector2(0.0006, 0.0006), []);
 
@@ -51,7 +51,7 @@ function CorridorScene({ onIntroComplete, started }: { onIntroComplete?: () => v
   return (
     <>
       <ambientLight intensity={0.025} />
-      <CinematicCamera onIntroComplete={onIntroComplete} chromaticOffset={caOffset} started={started} />
+      <CinematicCamera onIntroComplete={onIntroComplete} chromaticOffset={caOffset} />
 
       {/* Rain surfaces — all surfaces match floor density (~35 chars/unit) */}
       {/* Walls: D=30 → 400 cols, H=3.5 → 47 rows */}
@@ -68,9 +68,9 @@ function CorridorScene({ onIntroComplete, started }: { onIntroComplete?: () => v
       {/* Back wall: W=4 → 140 cols, H=3.5 → 47 rows */}
       <RainSurface atlas={atlas} position={[0, 0, -D]} rotation={[0, 0, 0]}
         size={[W, H]} cols={140} rows={47} speed={0.8} bright={1.6} base={0.35} fogFar={42} />
-      {/* Front entrance rain — large surface the camera approaches through */}
-      <RainSurface atlas={atlas} position={[0, 0, 3]} rotation={[0, 0, 0]}
-        size={[12, 8]} cols={420} rows={280} speed={1.0} bright={1.8} base={0.4} fogFar={50} />
+      {/* Front entrance rain — fills entire screen from camera start at z=5 */}
+      <RainSurface atlas={atlas} position={[0, 0, 4]} rotation={[0, 0, 0]}
+        size={[20, 14]} cols={700} rows={490} speed={1.0} bright={1.8} base={0.4} fogFar={50} />
 
       {/* Corridor architectural details — doors, panels, lights */}
       <CorridorStructure atlas={atlas} />
@@ -89,7 +89,7 @@ function CorridorScene({ onIntroComplete, started }: { onIntroComplete?: () => v
 
 // ─── Exported Component ─────────────────────────────────────────────────────
 
-export default function MatrixCorridorScene({ onIntroComplete, started }: { onIntroComplete?: () => void; started?: boolean }) {
+export default function MatrixCorridorScene({ onIntroComplete }: { onIntroComplete?: () => void }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
@@ -105,7 +105,7 @@ export default function MatrixCorridorScene({ onIntroComplete, started }: { onIn
         style={{ background: "#000000" }}
         data-testid="hero-canvas"
       >
-        <CorridorScene onIntroComplete={onIntroComplete} started={started} />
+        <CorridorScene onIntroComplete={onIntroComplete} />
       </Canvas>
     </CanvasErrorBoundary>
   );
