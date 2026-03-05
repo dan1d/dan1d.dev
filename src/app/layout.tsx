@@ -5,6 +5,7 @@ import Navbar from "@/components/ui/Navbar";
 
 import Instructions from "@/components/ui/Instructions";
 import GlobalMatrixRain from "@/components/ui/GlobalMatrixRain";
+import { OnboardingProvider } from "@/context/OnboardingContext";
 import { siteConfig } from "@/data/projects";
 
 const geistSans = Geist({
@@ -32,10 +33,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased matrix-scanlines`}
       >
-        <Navbar />
-        <GlobalMatrixRain />
-        <Instructions />
-        {children}
+        <OnboardingProvider>
+          <Navbar />
+          <GlobalMatrixRain />
+          <Instructions />
+          {children}
+        </OnboardingProvider>
       </body>
     </html>
   );

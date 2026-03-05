@@ -21,6 +21,7 @@ function useCanvasVisibility(rootMargin = "200px") {
   return { ref, visible };
 }
 import { siteConfig } from "@/data/projects";
+import { useOnboarding } from "@/context/OnboardingContext";
 
 const MatrixCorridorScene = dynamic(
   () => import("@/components/three/MatrixCorridorScene"),
@@ -200,14 +201,16 @@ export default function Hero() {
   const [introComplete, setIntroComplete] = useState(false);
   const [showWakeUp, setShowWakeUp] = useState(false);
   const { ref: sectionVisRef, visible: canvasVisible } = useCanvasVisibility("0px");
+  const { ready: onboardingReady } = useOnboarding();
 
   const handleIntroComplete = useCallback(() => setIntroComplete(true), []);
 
   // Show "Wake up, dan1d..." after camera passes through entrance wall (~2s into anim)
   useEffect(() => {
+    if (!onboardingReady) return;
     const timer = setTimeout(() => setShowWakeUp(true), 2000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [onboardingReady]);
 
   // Reveal UI elements after cinematic intro completes
   useEffect(() => {
@@ -301,11 +304,12 @@ export default function Hero() {
     };
   }, []);
 
-  // Fallback: force intro complete after 12s
+  // Fallback: force intro complete after 12s (only starts counting after onboarding dismissed)
   useEffect(() => {
+    if (!onboardingReady) return;
     const timeout = setTimeout(() => setIntroComplete(true), 12000);
     return () => clearTimeout(timeout);
-  }, []);
+  }, [onboardingReady]);
 
   return (
     <section
@@ -313,9 +317,9 @@ export default function Hero() {
       ref={sectionVisRef}
       className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black"
     >
-      {/* 3D Matrix corridor — unmounts when scrolled offscreen to free WebGL context */}
+      {/* 3D Matrix corridor — waits for onboarding dismiss, unmounts when scrolled offscreen */}
       <div ref={canvasWrapperRef} className="absolute inset-0">
-        {canvasVisible ? (
+        {onboardingReady && canvasVisible ? (
           <MatrixCorridorScene onIntroComplete={handleIntroComplete} />
         ) : (
           <div className="absolute inset-0 bg-black" data-testid="hero-canvas" />

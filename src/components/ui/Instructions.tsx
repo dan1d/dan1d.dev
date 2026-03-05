@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-const STORAGE_KEY = "dan1d-onboarding-dismissed";
+import { useOnboarding } from "@/context/OnboardingContext";
 
 const features = [
   {
@@ -149,21 +147,10 @@ const features = [
 ];
 
 export default function Instructions() {
-  const [visible, setVisible] = useState(false);
+  const { ready, dismiss } = useOnboarding();
 
-  useEffect(() => {
-    const dismissed = localStorage.getItem(STORAGE_KEY);
-    if (!dismissed) {
-      setVisible(true);
-    }
-  }, []);
-
-  const dismiss = () => {
-    localStorage.setItem(STORAGE_KEY, "true");
-    setVisible(false);
-  };
-
-  if (!visible) return null;
+  // null = still checking localStorage, true = already dismissed — don't show
+  if (ready === null || ready === true) return null;
 
   return (
     <div
@@ -219,7 +206,7 @@ export default function Instructions() {
           <button
             type="button"
             data-testid="dismiss-instructions"
-            onClick={dismiss}
+            onClick={() => dismiss()}
             className="px-6 py-2.5 rounded-full text-sm font-semibold bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:opacity-90 transition-opacity duration-200 shadow-lg"
           >
             Got it

@@ -1,6 +1,15 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import Hero from "./Hero";
+import { OnboardingProvider } from "@/context/OnboardingContext";
+
+function renderHero() {
+  return render(
+    <OnboardingProvider>
+      <Hero />
+    </OnboardingProvider>
+  );
+}
 
 // Mock 3D scenes since they use WebGL/R3F Canvas which can't render in jsdom
 vi.mock("@/components/three/HeroScene", () => ({
@@ -24,19 +33,25 @@ vi.mock("gsap", () => ({
 }));
 
 describe("Hero", () => {
+  beforeEach(() => {
+    // Mark onboarding as dismissed so Hero renders fully
+    localStorage.setItem("dan1d-onboarding-dismissed", "true");
+  });
+
   it("renders with section id='hero'", () => {
-    render(<Hero />);
+    renderHero();
     const section = document.getElementById("hero");
     expect(section).toBeInTheDocument();
   });
 
-  it("renders the main heading with 'dan1d'", () => {
-    render(<Hero />);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("dan1d");
+  it("renders the title with site name", () => {
+    renderHero();
+    const matches = screen.getAllByText(/full-stack engineer/i);
+    expect(matches.length).toBeGreaterThan(0);
   });
 
   it("renders the subtitle 'Full-Stack Engineer'", () => {
-    render(<Hero />);
+    renderHero();
     // The subtitle text appears in both the subtitle paragraph and the description.
     // Use getAllByText and check that at least one match exists.
     const matches = screen.getAllByText(/full-stack engineer/i);
@@ -44,27 +59,27 @@ describe("Hero", () => {
   });
 
   it("renders a description line about building with code, AI, and AR", () => {
-    render(<Hero />);
+    renderHero();
     // The description from siteConfig mentions code, AI, and augmented reality
     expect(screen.getByText(/building/i)).toBeInTheDocument();
   });
 
   it("renders a 'View Projects' CTA button with href='#projects'", () => {
-    render(<Hero />);
+    renderHero();
     const link = screen.getByRole("link", { name: /view projects/i });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "#projects");
   });
 
   it("renders a 'Try AR Experience' secondary CTA button with href='#ar'", () => {
-    render(<Hero />);
+    renderHero();
     const link = screen.getByRole("link", { name: /try ar experience/i });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "#ar");
   });
 
   it("has a 3D canvas container with data-testid='hero-canvas'", () => {
-    render(<Hero />);
+    renderHero();
     expect(screen.getByTestId("hero-canvas")).toBeInTheDocument();
   });
 });

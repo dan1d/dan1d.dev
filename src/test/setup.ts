@@ -6,12 +6,17 @@ afterEach(() => {
   cleanup();
 });
 
-// Mock ResizeObserver for R3F
-globalThis.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+// Mock ResizeObserver for R3F and components using it
+class MockResizeObserver {
+  callback: ResizeObserverCallback;
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+  }
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
 // Mock IntersectionObserver — triggers callback immediately with isIntersecting: true
 class MockIntersectionObserver {

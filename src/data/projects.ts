@@ -159,7 +159,7 @@ export const socialLinks: SocialLink[] = [
   { name: "GitHub", url: "https://github.com/dan1d", icon: "github" },
   {
     name: "LinkedIn",
-    url: "https://linkedin.com/in/danieldominguezdiaz",
+    url: "https://www.linkedin.com/in/dan1d",
     icon: "linkedin",
   },
   { name: "Email", url: "mailto:danielfromarg@gmail.com", icon: "mail" },

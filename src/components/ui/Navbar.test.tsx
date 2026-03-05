@@ -17,21 +17,21 @@ describe("Navbar", () => {
     render(<Navbar />);
     const link = screen.getByRole("link", { name: /projects/i });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "#projects");
+    expect(link).toHaveAttribute("href", "/#projects");
   });
 
   it("renders an AR Experience navigation link with correct href", () => {
     render(<Navbar />);
     const link = screen.getByRole("link", { name: /ar experience/i });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "#ar");
+    expect(link).toHaveAttribute("href", "/#ar");
   });
 
   it("renders a GitHub navigation link with correct href", () => {
     render(<Navbar />);
     const link = screen.getByRole("link", { name: /github/i });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "#github");
+    expect(link).toHaveAttribute("href", "/#github");
   });
 
   it("renders a 'View in AR' CTA button", () => {

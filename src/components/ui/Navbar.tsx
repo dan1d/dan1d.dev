@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 
 const navLinks = [
-  { label: "Projects", href: "#projects" },
-  { label: "GitHub", href: "#github" },
-  { label: "Resume", href: "#resume" },
-  { label: "AR Experience", href: "#ar" },
+  { label: "Projects", href: "/#projects" },
+  { label: "GitHub", href: "/#github" },
+  { label: "Resume", href: "/#resume" },
+  { label: "Card", href: "/#card" },
+  { label: "AR Experience", href: "/#ar" },
 ];
 
 export default function Navbar() {
@@ -55,7 +56,7 @@ export default function Navbar() {
       >
         {/* Logo */}
         <a
-          href="#"
+          href="/"
           className="text-base font-bold tracking-tight"
           style={{ color: "#00ff41", textShadow: "0 0 8px #00ff41" }}
         >
@@ -79,7 +80,7 @@ export default function Navbar() {
         {/* CTA + Mobile Toggle */}
         <div className="flex items-center gap-4">
           <a
-            href="#ar"
+            href="/#ar"
             className="hidden md:inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-mono tracking-widest border border-green-400/40 text-green-400 hover:border-green-400 hover:bg-green-400/10 transition-all duration-200"
           >
             View in AR
@@ -132,7 +133,7 @@ export default function Navbar() {
             ))}
             <li>
               <a
-                href="#ar"
+                href="/#ar"
                 onClick={() => setMenuOpen(false)}
                 className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs tracking-widest border border-green-400/40 text-green-400"
               >

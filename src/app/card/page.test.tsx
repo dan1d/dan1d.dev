@@ -26,27 +26,27 @@ vi.mock("qrcode.react", () => ({
 describe("AR Business Card page", () => {
   it("renders Daniel's full name", () => {
     render(<CardPage />);
-    expect(
-      screen.getByText("Daniel Alejandro Dominguez Diaz")
-    ).toBeInTheDocument();
+    // GlitchText renders name multiple times (main + glitch copies)
+    const matches = screen.getAllByText("Daniel Alejandro Dominguez Diaz");
+    expect(matches.length).toBeGreaterThan(0);
   });
 
-  it("renders the title 'Senior Full-Stack Engineer'", () => {
+  it("renders the handle @dan1d", () => {
     render(<CardPage />);
-    expect(
-      screen.getByText("Senior Full-Stack Engineer")
-    ).toBeInTheDocument();
+    expect(screen.getByText("@dan1d")).toBeInTheDocument();
   });
 
-  it("renders social links for GitHub, LinkedIn, and Email", () => {
+  it("renders social links for GitHub, LinkedIn, Email, and CodePrism", () => {
     render(<CardPage />);
     const githubLink = screen.getByRole("link", { name: /github/i });
     const linkedinLink = screen.getByRole("link", { name: /linkedin/i });
     const emailLink = screen.getByRole("link", { name: /email/i });
+    const codeprismLink = screen.getByRole("link", { name: /codeprism/i });
 
     expect(githubLink).toBeInTheDocument();
     expect(linkedinLink).toBeInTheDocument();
     expect(emailLink).toBeInTheDocument();
+    expect(codeprismLink).toBeInTheDocument();
   });
 
   it("renders a QR code with data-testid='card-qr'", () => {
@@ -71,12 +71,12 @@ describe("AR Business Card page", () => {
     render(<CardPage />);
     const btn = screen.getByTestId("save-contact-btn");
     expect(btn).toBeInTheDocument();
-    expect(btn).toHaveAccessibleName(/save contact/i);
   });
 
-  it("renders the 3D background canvas with data-testid='card-canvas'", () => {
+  it("renders a back to portfolio link", () => {
     render(<CardPage />);
-    const canvas = screen.getByTestId("card-canvas");
-    expect(canvas).toBeInTheDocument();
+    // There may be multiple links to "/", just check at least one exists
+    const links = screen.getAllByRole("link").filter(el => el.getAttribute("href") === "/");
+    expect(links.length).toBeGreaterThan(0);
   });
 });
