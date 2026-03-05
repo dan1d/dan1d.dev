@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useMemo, useEffect, useState } from "react";
+import { Component, useMemo, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { Canvas } from "@react-three/fiber";
 import {
   EffectComposer,
@@ -19,12 +20,31 @@ import {
   CORRIDOR,
 } from "./corridor";
 
+// ─── Error Boundary ─────────────────────────────────────────────────────────
+// R3F Canvas children contain Three.js objects with circular parent/children
+// references. If an error occurs inside the scene graph, React/Next.js tries
+// to JSON.stringify the component tree which crashes with "Converting circular
+// structure to JSON". This boundary catches that gracefully.
+
+class CanvasErrorBoundary extends Component<
+  { children: ReactNode; fallback: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
 // ─── Main Corridor Scene ────────────────────────────────────────────────────
 
 function CorridorScene({ onIntroComplete }: { onIntroComplete?: () => void }) {
   const atlas = useMemo(() => buildGlyphAtlas(), []);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const caRef = useRef<any>(null);
+  // Shared mutable Vector2 — CinematicCamera mutates it, ChromaticAberration reads it
   const caOffset = useMemo(() => new THREE.Vector2(0.0006, 0.0006), []);
 
   const { W, H, D } = CORRIDOR;
@@ -32,7 +52,7 @@ function CorridorScene({ onIntroComplete }: { onIntroComplete?: () => void }) {
   return (
     <>
       <ambientLight intensity={0.025} />
-      <CinematicCamera onIntroComplete={onIntroComplete} chromaticRef={caRef} />
+      <CinematicCamera onIntroComplete={onIntroComplete} chromaticOffset={caOffset} />
 
       {/* Rain surfaces — all surfaces match floor density (~35 chars/unit) */}
       {/* Walls: D=30 → 400 cols, H=3.5 → 47 rows */}
@@ -59,7 +79,7 @@ function CorridorScene({ onIntroComplete }: { onIntroComplete?: () => void }) {
       <EffectComposer>
         <Bloom intensity={2.0} luminanceThreshold={0.15} luminanceSmoothing={0.85} mipmapBlur />
         <Vignette darkness={0.5} offset={0.25} />
-        <ChromaticAberration ref={caRef} offset={caOffset} radialModulation={false} />
+        <ChromaticAberration offset={caOffset} radialModulation={false} />
       </EffectComposer>
     </>
   );
@@ -71,16 +91,20 @@ export default function MatrixCorridorScene({ onIntroComplete }: { onIntroComple
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
-  if (!mounted) return <div className="absolute inset-0 bg-black" data-testid="hero-canvas" />;
+  const fallback = <div className="absolute inset-0 bg-black" data-testid="hero-canvas" />;
+
+  if (!mounted) return fallback;
 
   return (
-    <Canvas
-      gl={{ antialias: false, alpha: false, powerPreference: "high-performance" }}
-      camera={{ position: [0, 0, 5], fov: 60, near: 0.1, far: 60 }}
-      style={{ background: "#000000" }}
-      data-testid="hero-canvas"
-    >
-      <CorridorScene onIntroComplete={onIntroComplete} />
-    </Canvas>
+    <CanvasErrorBoundary fallback={fallback}>
+      <Canvas
+        gl={{ antialias: false, alpha: false, powerPreference: "high-performance" }}
+        camera={{ position: [0, 0, 5], fov: 60, near: 0.1, far: 60 }}
+        style={{ background: "#000000" }}
+        data-testid="hero-canvas"
+      >
+        <CorridorScene onIntroComplete={onIntroComplete} />
+      </Canvas>
+    </CanvasErrorBoundary>
   );
 }

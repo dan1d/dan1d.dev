@@ -1,12 +1,13 @@
 import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
+import * as THREE from "three";
 
 export interface CinematicCameraProps {
   onIntroComplete?: () => void;
-  chromaticRef: React.RefObject<unknown>;
+  chromaticOffset: THREE.Vector2;
 }
 
-export function CinematicCamera({ onIntroComplete, chromaticRef }: CinematicCameraProps) {
+export function CinematicCamera({ onIntroComplete, chromaticOffset }: CinematicCameraProps) {
   const { camera } = useThree();
   const doneRef = useRef(false);
   const t0Ref = useRef(-1);
@@ -62,11 +63,7 @@ export function CinematicCamera({ onIntroComplete, chromaticRef }: CinematicCame
     camera.position.set(x, y, z);
     camera.lookAt(0, 0, z - 10);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ca = chromaticRef.current as any;
-    if (ca?.offset) {
-      try { ca.offset.set(caX, caY); } catch { /* noop */ }
-    }
+    chromaticOffset.set(caX, caY);
 
     if (t >= 7.5 && !doneRef.current) {
       doneRef.current = true;

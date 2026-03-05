@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useMemo, useCallback } from "react";
+import { useRef, useMemo, useCallback, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { OrbitControls, Text } from "@react-three/drei";
 import * as THREE from "three";
+import MatrixRain from "./MatrixRain";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -28,13 +29,13 @@ const STEP = BAR_SIZE + GAP;
 const MIN_HEIGHT = 0.1;
 const MAX_HEIGHT = 2.5;
 
-// Level → color mapping (dark → cyan → purple)
+// Level → color mapping (brighter Matrix green scale)
 const LEVEL_COLORS: Record<number, string> = {
-  0: "#1a1a2e",
-  1: "#06b6d4",
-  2: "#0891b2",
-  3: "#7c3aed",
-  4: "#8b5cf6",
+  0: "#1a3a25", // visible dark green
+  1: "#2d8a4e", // medium green
+  2: "#3fbd67", // bright green
+  3: "#52ef80", // brighter
+  4: "#00ff41", // full Matrix green
 };
 
 // Pre-build THREE.Color objects for reuse
@@ -42,8 +43,171 @@ const LEVEL_THREE_COLORS = Object.fromEntries(
   Object.entries(LEVEL_COLORS).map(([k, v]) => [k, new THREE.Color(v)])
 );
 
-const HOVER_EMISSIVE = new THREE.Color("#ffffff");
-const DEFAULT_EMISSIVE = new THREE.Color("#000000");
+// ─── FloatingQuotes ─────────────────────────────────────────────────────────
+
+const QUOTES = [
+  "Wake up, dan1d...",
+  "Follow the white rabbit",
+  "I know kung fu",
+  "There is no spoon",
+  "Free your mind",
+  "The Matrix has you",
+];
+
+interface QuoteInstance {
+  text: string;
+  x: number;
+  y: number;
+  z: number;
+  opacity: number;
+  speed: number;
+  initialY: number;
+  maxY: number;
+}
+
+function FloatingQuotes() {
+  const quotesRef = useRef<QuoteInstance[]>([]);
+
+  // Initialize quote instances once
+  useMemo(() => {
+    const instances: QuoteInstance[] = [];
+    for (let i = 0; i < 5; i++) {
+      const initialY = -3 + Math.random() * 6;
+      instances.push({
+        text: QUOTES[i % QUOTES.length],
+        x: -6 + Math.random() * 12,
+        y: initialY,
+        z: -3 - Math.random() * 5,
+        opacity: 0.15 + Math.random() * 0.25,
+        speed: 0.06 + Math.random() * 0.08,
+        initialY: initialY - 5,
+        maxY: initialY + 5,
+      });
+    }
+    quotesRef.current = instances;
+    return instances;
+  }, []);
+
+  // State to trigger re-renders on position updates
+  const [, setTick] = useState(0);
+
+  useFrame((_state, delta) => {
+    let changed = false;
+    for (const q of quotesRef.current) {
+      q.y += q.speed * delta * 10;
+      if (q.y > q.maxY) {
+        q.y = q.initialY;
+        q.x = -6 + Math.random() * 12;
+        q.z = -3 - Math.random() * 5;
+        q.text = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+        q.opacity = 0.15 + Math.random() * 0.25;
+        changed = true;
+      }
+    }
+    if (changed) {
+      setTick((t) => t + 1);
+    }
+  });
+
+  return (
+    <group>
+      {quotesRef.current.map((q, i) => (
+        <Text
+          key={i}
+          position={[q.x, q.y, q.z]}
+          fontSize={0.3}
+          color="#00ff41"
+          anchorX="center"
+          anchorY="middle"
+          fillOpacity={q.opacity}
+          material-transparent={true}
+          material-depthWrite={false}
+        >
+          {q.text}
+          <meshBasicMaterial
+            color="#00ff41"
+            transparent
+            opacity={q.opacity}
+            depthWrite={false}
+          />
+        </Text>
+      ))}
+    </group>
+  );
+}
+
+// ─── GridFloor ──────────────────────────────────────────────────────────────
+
+function GridFloor() {
+  const width = COLS * STEP + GAP * 4;
+  const depth = ROWS * STEP + GAP * 4;
+
+  const gridTexture = useMemo(() => {
+    const size = 512;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d")!;
+
+    // Dark background
+    ctx.fillStyle = "#050e08";
+    ctx.fillRect(0, 0, size, size);
+
+    // Grid lines
+    const gridCount = 16;
+    const cellSize = size / gridCount;
+    ctx.strokeStyle = "#00ff4130";
+    ctx.lineWidth = 1;
+
+    for (let i = 0; i <= gridCount; i++) {
+      const pos = i * cellSize;
+      ctx.beginPath();
+      ctx.moveTo(pos, 0);
+      ctx.lineTo(pos, size);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, pos);
+      ctx.lineTo(size, pos);
+      ctx.stroke();
+    }
+
+    // Brighter major grid lines every 4 cells
+    ctx.strokeStyle = "#00ff4160";
+    ctx.lineWidth = 2;
+    for (let i = 0; i <= gridCount; i += 4) {
+      const pos = i * cellSize;
+      ctx.beginPath();
+      ctx.moveTo(pos, 0);
+      ctx.lineTo(pos, size);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, pos);
+      ctx.lineTo(size, pos);
+      ctx.stroke();
+    }
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(4, 2);
+    tex.needsUpdate = true;
+    return tex;
+  }, []);
+
+  return (
+    <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      <planeGeometry args={[width, depth]} />
+      <meshPhongMaterial
+        map={gridTexture}
+        emissive="#003300"
+        emissiveIntensity={0.3}
+        transparent
+        opacity={0.9}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  );
+}
 
 // ─── InstancedBars ──────────────────────────────────────────────────────────
 
@@ -105,7 +269,7 @@ function InstancedBars({ data, onHover }: InstancedBarsProps) {
   const meshRefCallback = useCallback(
     (mesh: THREE.InstancedMesh | null) => {
       if (!mesh) return;
-      (meshRef as React.MutableRefObject<THREE.InstancedMesh | null>).current =
+      (meshRef as React.RefObject<THREE.InstancedMesh | null>).current =
         mesh;
       const d = new THREE.Object3D();
       instanceData.forEach((cell, i) => {
@@ -151,7 +315,6 @@ function InstancedBars({ data, onHover }: InstancedBarsProps) {
         const prevColor =
           LEVEL_THREE_COLORS[prevCell?.level ?? 0] ?? LEVEL_THREE_COLORS[0];
         mesh.setColorAt(hoveredIndex.current, prevColor);
-        (mesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 0;
       }
       hoveredIndex.current = newIndex;
       if (newIndex >= 0) {
@@ -191,28 +354,14 @@ function InstancedBars({ data, onHover }: InstancedBarsProps) {
       receiveShadow
     >
       <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial
+      <meshPhongMaterial
         vertexColors
-        emissive={DEFAULT_EMISSIVE}
+        emissive="#000000"
         emissiveIntensity={0}
-        roughness={0.4}
-        metalness={0.3}
+        shininess={80}
+        specular={new THREE.Color("#114422")}
       />
     </instancedMesh>
-  );
-}
-
-// ─── BasePlatform ────────────────────────────────────────────────────────────
-
-function BasePlatform() {
-  const width = COLS * STEP + GAP * 2;
-  const depth = ROWS * STEP + GAP * 2;
-
-  return (
-    <mesh position={[0, -0.05, 0]} receiveShadow>
-      <boxGeometry args={[width, 0.1, depth]} />
-      <meshStandardMaterial color="#1a1a2e" roughness={0.8} metalness={0.1} />
-    </mesh>
   );
 }
 
@@ -221,24 +370,40 @@ function BasePlatform() {
 function Scene({ data, onHover }: SkylineSceneProps) {
   return (
     <>
-      {/* Lighting */}
-      <ambientLight intensity={0.4} />
+      {/* Omnidirectional lighting — bars stay visible from every angle */}
+      <ambientLight intensity={1.0} />
       <directionalLight
         position={[10, 20, 10]}
-        intensity={1.2}
+        intensity={1.5}
         castShadow
         shadow-mapSize={[1024, 1024]}
         color="#ffffff"
       />
       <directionalLight
-        position={[-10, 10, -10]}
-        intensity={0.4}
-        color="#8b5cf6"
+        position={[-10, 15, -10]}
+        intensity={1.2}
+        color="#ffffff"
       />
-      <pointLight position={[0, 15, 0]} intensity={0.6} color="#06b6d4" />
+      <directionalLight
+        position={[0, 10, -15]}
+        intensity={1.0}
+        color="#ffffff"
+      />
+      <pointLight position={[0, 12, 0]} intensity={1.5} color="#00ff41" />
+      <pointLight position={[-8, 5, 8]} intensity={1.0} color="#39d353" />
 
-      {/* Geometry */}
-      <BasePlatform />
+      {/* Matrix Rain behind the skyline */}
+      <group position={[0, 3, -5]} rotation={[0, 0, 0]}>
+        <MatrixRain columnCount={50} rowCount={20} speed={1.2} opacity={0.3} area={[16, 10]} />
+      </group>
+
+      {/* Floating holographic quotes */}
+      <FloatingQuotes />
+
+      {/* Grid floor */}
+      <GridFloor />
+
+      {/* Instanced skyline bars */}
       <InstancedBars data={data} onHover={onHover} />
 
       {/* Controls */}
@@ -260,14 +425,14 @@ export default function SkylineScene({ data, onHover }: SkylineSceneProps) {
   return (
     <Canvas
       camera={{
-        position: [12, 8, 12],
-        fov: 45,
+        position: [8, 6, 8],
+        fov: 50,
         near: 0.1,
         far: 100,
       }}
-      gl={{ antialias: true, alpha: true }}
+      gl={{ antialias: true, alpha: false }}
       shadows
-      style={{ background: "transparent", width: "100%", height: "100%" }}
+      style={{ background: "#000000", width: "100%", height: "100%" }}
     >
       <Scene data={data} onHover={onHover} />
     </Canvas>

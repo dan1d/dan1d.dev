@@ -28,7 +28,7 @@ function FloatingParticles() {
           <mesh key={i} position={[x, y, z]}>
             <sphereGeometry args={[size, 6, 6]} />
             <meshBasicMaterial
-              color={i % 2 === 0 ? "#06b6d4" : "#8b5cf6"}
+              color={i % 2 === 0 ? "#00ff41" : "#39ff14"}
               transparent
               opacity={0.35}
             />
@@ -43,8 +43,8 @@ function Scene() {
   return (
     <>
       <ambientLight intensity={0.1} />
-      <pointLight position={[0, 0, 4]} intensity={0.6} color="#06b6d4" distance={10} />
-      <pointLight position={[3, 2, -2]} intensity={0.4} color="#8b5cf6" distance={8} />
+      <pointLight position={[0, 0, 4]} intensity={0.6} color="#00ff41" distance={10} />
+      <pointLight position={[3, 2, -2]} intensity={0.4} color="#39ff14" distance={8} />
 
       <Stars
         radius={60}

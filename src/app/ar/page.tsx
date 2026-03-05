@@ -16,13 +16,18 @@ const SkylineScene = dynamic(
   { ssr: false, loading: () => <ARLoadingPlaceholder /> }
 );
 
+const MatrixResumeScene = dynamic(
+  () => import("@/components/three/MatrixResumeScene"),
+  { ssr: false, loading: () => <ARLoadingPlaceholder /> }
+);
+
 type ViewMode = "models" | "resume" | "skyline";
 
 function ARLoadingPlaceholder() {
   return (
     <div className="flex items-center justify-center w-full h-full min-h-[300px]">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />
+        <div className="w-12 h-12 rounded-full border-2 border-green-400 border-t-transparent animate-spin" />
         <p className="text-sm text-white/60">Loading 3D viewer…</p>
       </div>
     </div>
@@ -125,8 +130,8 @@ function ARPageContent() {
         </a>
 
         <div className="flex items-center gap-2">
-          <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-          <span className="text-sm font-semibold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+          <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+          <span className="text-sm font-semibold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
             AR Experience
           </span>
         </div>
@@ -159,7 +164,7 @@ function ARPageContent() {
             onClick={() => setActiveView(key)}
             className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
               activeView === key
-                ? "bg-gradient-to-r from-cyan-500 to-purple-600 text-white shadow-sm"
+                ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-sm"
                 : "text-white/50 hover:text-white hover:bg-white/5 border border-transparent"
             }`}
           >
@@ -170,77 +175,153 @@ function ARPageContent() {
 
       {/* Main content */}
       <main className="flex-1 flex flex-col">
-        {/* Resume view */}
+        {/* Resume view — Matrix decoder */}
         {activeView === "resume" && (
-          <div className="flex-1 flex flex-col">
-            <div className="flex items-center justify-between px-4 sm:px-6 py-3 bg-white/5 border-b border-white/10">
+          <div className="flex-1 flex flex-col lg:flex-row">
+            {/* Matrix decode canvas */}
+            <div className="flex-1 relative min-h-[60vh] lg:min-h-0 bg-black">
+              {/* Corner HUD brackets */}
+              <div
+                className="absolute top-3 left-3 w-8 h-8 border-t-2 border-l-2 border-green-400/70 pointer-events-none z-10"
+                aria-hidden="true"
+              />
+              <div
+                className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2 border-green-400/70 pointer-events-none z-10"
+                aria-hidden="true"
+              />
+              <div
+                className="absolute bottom-3 left-3 w-8 h-8 border-b-2 border-l-2 border-lime-400/60 pointer-events-none z-10"
+                aria-hidden="true"
+              />
+              <div
+                className="absolute bottom-3 right-3 w-8 h-8 border-b-2 border-r-2 border-lime-400/60 pointer-events-none z-10"
+                aria-hidden="true"
+              />
+
+              {/* Scanline overlay */}
+              <div
+                className="absolute inset-0 pointer-events-none z-[2]"
+                aria-hidden="true"
+                style={{
+                  background:
+                    "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,255,65,0.02) 3px, rgba(0,255,65,0.02) 6px)",
+                }}
+              />
+
+              {/* HUD: Top-left */}
+              <div
+                className="absolute top-5 left-14 z-10 flex items-center gap-2 font-mono"
+                aria-hidden="true"
+              >
+                <span
+                  className="w-2 h-2 rounded-full bg-green-400 animate-pulse"
+                  style={{ boxShadow: "0 0 6px #00ff41" }}
+                />
+                <span
+                  className="text-green-400 text-xs tracking-widest"
+                  style={{ textShadow: "0 0 6px #00ff41" }}
+                >
+                  DECRYPTING IDENTITY...
+                </span>
+              </div>
+
+              {/* HUD: Top-right */}
+              <div
+                className="absolute top-5 right-14 z-10 font-mono text-right"
+                aria-hidden="true"
+              >
+                <div
+                  className="text-green-400 text-xs tracking-widest"
+                  style={{ textShadow: "0 0 6px #00ff41" }}
+                >
+                  CLEARANCE: LEVEL_4
+                </div>
+              </div>
+
+              {/* The Matrix resume decoder */}
+              <div className="absolute inset-0 z-[1]">
+                <MatrixResumeScene autoPlay decodeDelay={1500} />
+              </div>
+            </div>
+
+            {/* Sidebar */}
+            <aside className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-white/10 bg-white/5 backdrop-blur-xl p-6 space-y-6">
               <div>
-                <p className="text-xs text-cyan-400 font-semibold tracking-widest uppercase">
+                <p className="text-xs text-green-400 font-semibold tracking-widest uppercase mb-2">
                   Viewing
                 </p>
-                <h1 className="text-lg font-bold text-white leading-tight">
-                  Resume — Daniel Alejandro Dominguez Diaz
+                <h1 className="text-2xl font-bold text-white mb-2">
+                  Matrix Resume
                 </h1>
-              </div>
-              <a
-                href="/resume.pdf"
-                download
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-white bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 transition-opacity"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-3.5 h-3.5"
-                  aria-hidden="true"
-                >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                Download
-              </a>
-            </div>
-
-            <div className="flex-1 relative">
-              <iframe
-                src="/resume.pdf"
-                title="Resume PDF"
-                className="absolute inset-0 w-full h-full border-0"
-                style={{ border: "none" }}
-              >
-                <p className="p-6 text-white/50 text-sm">
-                  Your browser does not support inline PDF viewing.{" "}
-                  <a
-                    href="/resume.pdf"
-                    className="text-cyan-400 underline hover:text-cyan-300"
-                  >
-                    Download the PDF
-                  </a>{" "}
-                  to view it.
+                <p className="text-sm text-white/60 leading-relaxed font-mono">
+                  &quot;What if I told you... your resume is just code?&quot;
                 </p>
-              </iframe>
-            </div>
-
-            {arSupported !== null && (
-              <div className="px-4 sm:px-6 py-3 bg-white/5 border-t border-white/10">
-                {arSupported ? (
-                  <p className="text-xs text-purple-300/70 text-center">
-                    AR-capable device detected — future update will support
-                    overlaying resume data in augmented reality.
-                  </p>
-                ) : (
-                  <p className="text-xs text-white/30 text-center">
-                    Use a WebXR-capable device to experience AR resume overlay
-                    in a future update.
-                  </p>
-                )}
+                <p className="text-xs text-green-400/50 mt-1 font-mono">
+                  — Morpheus
+                </p>
               </div>
-            )}
+
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
+                <p className="text-xs font-semibold text-white/50 tracking-widest uppercase">
+                  Subject
+                </p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-white/40">Name</span>
+                    <span className="text-green-400 font-mono">Daniel A. Dominguez</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/40">Role</span>
+                    <span className="text-green-400 font-mono">Sr Full-Stack Eng</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/40">Experience</span>
+                    <span className="text-green-400 font-mono">12+ years</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/40">Status</span>
+                    <span className="text-lime-400 font-mono">ONLINE</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <a
+                  href="/resume.pdf"
+                  download
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg font-mono text-xs text-green-400 border border-green-400/40 bg-green-400/5 tracking-widest hover:bg-green-400/10 hover:border-green-400/60 transition-all duration-200"
+                  style={{ textShadow: "0 0 6px #00ff41" }}
+                >
+                  [DOWNLOAD_SOURCE] resume.pdf
+                </a>
+                <a
+                  href="/"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg font-mono text-xs text-green-400/60 border border-green-400/20 tracking-widest hover:text-green-400 hover:border-green-400/40 transition-all duration-200"
+                >
+                  [EXIT_MATRIX] &rarr; dan1d.dev
+                </a>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
+                <p className="text-xs font-semibold text-white/50 tracking-widest uppercase">
+                  How it works
+                </p>
+                <ul className="space-y-2 text-xs text-white/50">
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-400 font-bold mt-0.5">1</span>
+                    Matrix rain initializes the neural feed
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-400 font-bold mt-0.5">2</span>
+                    Characters decode from noise to identity data
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-400 font-bold mt-0.5">3</span>
+                    Skills, experience, and mission log materialize
+                  </li>
+                </ul>
+              </div>
+            </aside>
           </div>
         )}
 
@@ -250,19 +331,19 @@ function ARPageContent() {
             <div className="flex-1 relative min-h-[50vh] lg:min-h-0 bg-black/50">
               {/* Corner accents */}
               <div
-                className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-cyan-400/40 pointer-events-none z-10"
+                className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-green-400/40 pointer-events-none z-10"
                 aria-hidden="true"
               />
               <div
-                className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-cyan-400/40 pointer-events-none z-10"
+                className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-green-400/40 pointer-events-none z-10"
                 aria-hidden="true"
               />
               <div
-                className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-purple-400/40 pointer-events-none z-10"
+                className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-lime-400/40 pointer-events-none z-10"
                 aria-hidden="true"
               />
               <div
-                className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-purple-400/40 pointer-events-none z-10"
+                className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-lime-400/40 pointer-events-none z-10"
                 aria-hidden="true"
               />
 
@@ -279,7 +360,7 @@ function ARPageContent() {
               {hoveredCell && (
                 <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
                   <div className="px-4 py-2 rounded-lg bg-black/80 border border-white/10 backdrop-blur-sm text-sm text-white/90 font-mono whitespace-nowrap">
-                    <span className="text-cyan-400 font-semibold">
+                    <span className="text-green-400 font-semibold">
                       {hoveredCell.count}
                     </span>
                     {" contributions on "}
@@ -297,7 +378,7 @@ function ARPageContent() {
 
             <aside className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-white/10 bg-white/5 backdrop-blur-xl p-6 space-y-6">
               <div>
-                <p className="text-xs text-cyan-400 font-semibold tracking-widest uppercase mb-2">
+                <p className="text-xs text-green-400 font-semibold tracking-widest uppercase mb-2">
                   Viewing
                 </p>
                 <h1 className="text-2xl font-bold text-white mb-2">
@@ -312,13 +393,13 @@ function ARPageContent() {
               {skylineStats && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-lg bg-white/5 border border-white/10 p-3 text-center">
-                    <p className="text-2xl font-bold text-cyan-400">
+                    <p className="text-2xl font-bold text-green-400">
                       {skylineStats.total.toLocaleString()}
                     </p>
                     <p className="text-xs text-white/40 mt-1">Contributions</p>
                   </div>
                   <div className="rounded-lg bg-white/5 border border-white/10 p-3 text-center">
-                    <p className="text-2xl font-bold text-purple-400">
+                    <p className="text-2xl font-bold text-lime-400">
                       {skylineStats.year}
                     </p>
                     <p className="text-xs text-white/40 mt-1">Year</p>
@@ -332,15 +413,15 @@ function ARPageContent() {
                 </p>
                 <ul className="space-y-2 text-xs text-white/50">
                   <li className="flex items-start gap-2">
-                    <span className="text-cyan-400 font-bold mt-0.5">1</span>
+                    <span className="text-green-400 font-bold mt-0.5">1</span>
                     Drag to orbit around the skyline
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-cyan-400 font-bold mt-0.5">2</span>
+                    <span className="text-green-400 font-bold mt-0.5">2</span>
                     Scroll to zoom in and out
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-cyan-400 font-bold mt-0.5">3</span>
+                    <span className="text-green-400 font-bold mt-0.5">3</span>
                     Hover over bars to see contribution details
                   </li>
                 </ul>
@@ -354,7 +435,7 @@ function ARPageContent() {
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-white/40">Less</span>
                   <div className="flex gap-1">
-                    {["#1a1a2e", "#06b6d4", "#0891b2", "#7c3aed", "#8b5cf6"].map(
+                    {["#0d1117", "#0e4429", "#006d32", "#26a641", "#39d353"].map(
                       (c) => (
                         <div
                           key={c}
@@ -376,19 +457,19 @@ function ARPageContent() {
           <div className="flex-1 flex flex-col lg:flex-row">
             <div className="flex-1 relative min-h-[50vh] lg:min-h-0 bg-black/50">
               <div
-                className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-cyan-400/40 pointer-events-none z-10"
+                className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-green-400/40 pointer-events-none z-10"
                 aria-hidden="true"
               />
               <div
-                className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-cyan-400/40 pointer-events-none z-10"
+                className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-green-400/40 pointer-events-none z-10"
                 aria-hidden="true"
               />
               <div
-                className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-purple-400/40 pointer-events-none z-10"
+                className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-lime-400/40 pointer-events-none z-10"
                 aria-hidden="true"
               />
               <div
-                className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-purple-400/40 pointer-events-none z-10"
+                className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-lime-400/40 pointer-events-none z-10"
                 aria-hidden="true"
               />
 
@@ -410,7 +491,7 @@ function ARPageContent() {
 
             <aside className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-white/10 bg-white/5 backdrop-blur-xl p-6 space-y-6">
               <div>
-                <p className="text-xs text-cyan-400 font-semibold tracking-widest uppercase mb-2">
+                <p className="text-xs text-green-400 font-semibold tracking-widest uppercase mb-2">
                   Viewing
                 </p>
                 <h1 className="text-2xl font-bold text-white mb-2">
@@ -437,7 +518,7 @@ function ARPageContent() {
                   href={activeProject.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                  className="flex items-center gap-2 text-sm text-green-400 hover:text-green-300 transition-colors"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -471,7 +552,7 @@ function ARPageContent() {
                           onClick={() => setActiveProjectIndex(i)}
                           className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
                             i === activeProjectIndex
-                              ? "bg-cyan-500/20 text-cyan-400 border border-cyan-400/30"
+                              ? "bg-green-500/20 text-green-400 border border-green-400/30"
                               : "text-white/60 hover:text-white hover:bg-white/5 border border-transparent"
                           }`}
                         >
@@ -489,19 +570,19 @@ function ARPageContent() {
                 </p>
                 <ul className="space-y-2 text-xs text-white/50">
                   <li className="flex items-start gap-2">
-                    <span className="text-cyan-400 font-bold mt-0.5">1</span>
+                    <span className="text-green-400 font-bold mt-0.5">1</span>
                     {arSupported
                       ? "Tap the AR button in the model viewer"
                       : "Drag to orbit around the 3D model"}
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-cyan-400 font-bold mt-0.5">2</span>
+                    <span className="text-green-400 font-bold mt-0.5">2</span>
                     {arSupported
                       ? "Point your camera at a flat surface"
                       : "Pinch to zoom in and out"}
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-cyan-400 font-bold mt-0.5">3</span>
+                    <span className="text-green-400 font-bold mt-0.5">3</span>
                     {arSupported
                       ? "Tap to place and explore the project"
                       : "Scroll to switch between projects"}
@@ -521,7 +602,7 @@ export default function ARPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-black flex items-center justify-center">
-          <div className="w-12 h-12 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />
+          <div className="w-12 h-12 rounded-full border-2 border-green-400 border-t-transparent animate-spin" />
         </div>
       }
     >

@@ -18,9 +18,9 @@ export function buildGlyphAtlas(): THREE.CanvasTexture {
   ctx.textBaseline = "middle";
 
   const chars: string[] = [];
-  for (let cp = 0x30a0; cp <= 0x30ff; cp++) chars.push(String.fromCodePoint(cp));
   for (let i = 0; i < 26; i++) chars.push(String.fromCharCode(65 + i));
   for (let i = 0; i <= 9; i++) chars.push(String(i));
+  for (const s of "@#$%&*<>{}[]|/\\") chars.push(s);
 
   // Vary font sizes per cell for multi-size rain characters
   const sizes = [36, 42, 48, 52, 56, 60, 64, 72];

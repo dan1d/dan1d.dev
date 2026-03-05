@@ -60,7 +60,9 @@ describe("GitHubSkyline section", () => {
   it("renders total contributions count after data loads", async () => {
     render(<GitHubSkyline />);
     await waitFor(() => {
-      expect(screen.getByText(/1[,.]?234/)).toBeInTheDocument();
+      const el = screen.getByTestId("skyline-commit-count");
+      expect(el).toBeInTheDocument();
+      expect(el.textContent).toMatch(/1[,.]?234/);
     });
   });
 

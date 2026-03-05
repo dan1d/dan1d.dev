@@ -4,6 +4,7 @@ import {
   scrapeContributions,
   generateSkylineData,
   type ContributionData,
+  type DetailedContributions,
   type SkylineCell,
 } from "@/lib/github";
 
@@ -23,6 +24,7 @@ interface ContributionsResponse {
   year: number;
   totalContributions: number;
   contributions: SkylineCell[];
+  detailed?: DetailedContributions | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -34,13 +36,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const username = searchParams.get("username") ?? "dan1d";
 
   let contributionData: ContributionData;
+  let detailed: DetailedContributions | null = null;
 
   const token = process.env.GITHUB_TOKEN;
 
   try {
     if (token) {
       // Primary path: authenticated GraphQL query
-      contributionData = await fetchContributions(username, token);
+      const result = await fetchContributions(username, token);
+      contributionData = result.data;
+      detailed = result.detailed;
     } else {
       // Fallback path: HTML scrape (no token required)
       contributionData = await scrapeContributions(username);
@@ -62,6 +67,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     year: new Date().getFullYear(),
     totalContributions: contributionData.totalContributions,
     contributions: skyline,
+    detailed,
   };
 
   return NextResponse.json(body, {

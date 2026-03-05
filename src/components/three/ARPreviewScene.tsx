@@ -28,8 +28,8 @@ function RotatingCrystal() {
         distortion={0.15}
         distortionScale={0.5}
         temporalDistortion={0.1}
-        color="#22d3ee"
-        attenuationColor="#a855f7"
+        color="#00ff41"
+        attenuationColor="#0aff0a"
         attenuationDistance={0.5}
       />
     </mesh>
@@ -44,8 +44,8 @@ export default function ARPreviewScene() {
       style={{ background: "transparent" }}
     >
       <ambientLight intensity={0.3} />
-      <pointLight position={[2, 3, 2]} intensity={1.5} color="#22d3ee" />
-      <pointLight position={[-2, -1, -2]} intensity={0.8} color="#a855f7" />
+      <pointLight position={[2, 3, 2]} intensity={1.5} color="#00ff41" />
+      <pointLight position={[-2, -1, -2]} intensity={0.8} color="#0aff0a" />
       <RotatingCrystal />
       <Environment preset="city" />
     </Canvas>

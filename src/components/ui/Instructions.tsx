@@ -176,21 +176,22 @@ export default function Instructions() {
       <div className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl p-8">
         {/* Gradient decorations */}
         <div
-          className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-cyan-500/20 blur-3xl"
+          className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-green-500/20 blur-3xl"
           aria-hidden="true"
         />
         <div
-          className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-purple-600/20 blur-3xl"
+          className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-emerald-600/20 blur-3xl"
           aria-hidden="true"
         />
 
         {/* Title */}
         <h2
           id="instructions-title"
-          className="relative text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent mb-2"
+          className="relative text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent mb-2"
         >
           Welcome to dan1d.dev
         </h2>
+        <span className="block text-green-400/40 text-xs font-mono mt-1">There is no spoon.</span>
 
         {/* Intro */}
         <p className="relative text-white/60 text-sm mb-6">
@@ -202,7 +203,7 @@ export default function Instructions() {
         <ul className="relative space-y-3 mb-8">
           {features.map(({ icon, label, description }) => (
             <li key={label} className="flex items-start gap-3">
-              <span className="mt-0.5 flex-shrink-0 text-cyan-400">{icon}</span>
+              <span className="mt-0.5 flex-shrink-0 text-green-400">{icon}</span>
               <div>
                 <span className="block text-sm font-semibold text-white">
                   {label}
@@ -219,7 +220,7 @@ export default function Instructions() {
             type="button"
             data-testid="dismiss-instructions"
             onClick={dismiss}
-            className="px-6 py-2.5 rounded-full text-sm font-semibold bg-gradient-to-r from-cyan-500 to-purple-600 text-white hover:opacity-90 transition-opacity duration-200 shadow-lg"
+            className="px-6 py-2.5 rounded-full text-sm font-semibold bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:opacity-90 transition-opacity duration-200 shadow-lg"
           >
             Got it
           </button>

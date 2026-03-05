@@ -32,13 +32,8 @@ function buildGlyphAtlas(color: string): THREE.CanvasTexture {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  // Build character set: Katakana + Latin A-Z + digits 0-9
+  // Build character set: Latin A-Z + digits 0-9
   const chars: string[] = [];
-
-  // Katakana: U+30A0 to U+30FF (96 chars)
-  for (let cp = 0x30a0; cp <= 0x30ff; cp++) {
-    chars.push(String.fromCodePoint(cp));
-  }
 
   // Latin A-Z
   for (let i = 0; i < 26; i++) {

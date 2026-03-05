@@ -37,7 +37,7 @@ export default function Navbar() {
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    updateProgress(); // Set initial value
+    updateProgress();
 
     return () => {
       window.removeEventListener("scroll", onScroll);
@@ -48,26 +48,27 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-black/85 backdrop-blur-md border-b border-green-400/15">
       <nav
         aria-label="Main Navigation"
-        className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between"
+        className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between font-mono"
       >
         {/* Logo */}
         <a
           href="#"
-          className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent tracking-tight"
+          className="text-base font-bold tracking-tight"
+          style={{ color: "#00ff41", textShadow: "0 0 8px #00ff41" }}
         >
           dan1d
         </a>
 
         {/* Desktop Nav Links */}
-        <ul className="hidden md:flex items-center gap-8" role="list">
+        <ul className="hidden md:flex items-center gap-6" role="list">
           {navLinks.map(({ label, href }) => (
             <li key={href}>
               <a
                 href={href}
-                className="text-sm text-white/70 hover:text-white transition-colors duration-200"
+                className="text-xs text-green-400/50 hover:text-green-400 transition-colors duration-200 tracking-wider uppercase"
               >
                 {label}
               </a>
@@ -79,7 +80,7 @@ export default function Navbar() {
         <div className="flex items-center gap-4">
           <a
             href="#ar"
-            className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-cyan-500 to-purple-600 text-white hover:opacity-90 transition-opacity duration-200"
+            className="hidden md:inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-mono tracking-widest border border-green-400/40 text-green-400 hover:border-green-400 hover:bg-green-400/10 transition-all duration-200"
           >
             View in AR
           </a>
@@ -92,9 +93,9 @@ export default function Navbar() {
             onClick={() => setMenuOpen((prev) => !prev)}
             className="md:hidden flex flex-col gap-1.5 p-2"
           >
-            <span className="block w-5 h-0.5 bg-white transition-transform duration-200" />
-            <span className="block w-5 h-0.5 bg-white transition-opacity duration-200" />
-            <span className="block w-5 h-0.5 bg-white transition-transform duration-200" />
+            <span className="block w-5 h-0.5 bg-green-400/70 transition-transform duration-200" />
+            <span className="block w-5 h-0.5 bg-green-400/70 transition-opacity duration-200" />
+            <span className="block w-5 h-0.5 bg-green-400/70 transition-transform duration-200" />
           </button>
         </div>
       </nav>
@@ -108,7 +109,7 @@ export default function Navbar() {
           ref={progressRef}
           className="h-full w-0 origin-left"
           style={{
-            background: "linear-gradient(to right, #06b6d4, #8b5cf6)",
+            background: "linear-gradient(to right, #00ff41, #39ff14)",
             willChange: "width",
           }}
         />
@@ -116,14 +117,14 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="md:hidden bg-black/95 border-t border-white/10 px-4 pb-4">
+        <div className="md:hidden bg-black/95 border-t border-green-400/15 px-4 pb-4 font-mono">
           <ul className="flex flex-col gap-4 pt-4" role="list">
             {navLinks.map(({ label, href }) => (
               <li key={href}>
                 <a
                   href={href}
                   onClick={() => setMenuOpen(false)}
-                  className="text-sm text-white/70 hover:text-white transition-colors duration-200 block"
+                  className="text-xs text-green-400/50 hover:text-green-400 transition-colors duration-200 block uppercase tracking-wider"
                 >
                   {label}
                 </a>
@@ -133,7 +134,7 @@ export default function Navbar() {
               <a
                 href="#ar"
                 onClick={() => setMenuOpen(false)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-cyan-500 to-purple-600 text-white"
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs tracking-widest border border-green-400/40 text-green-400"
               >
                 View in AR
               </a>

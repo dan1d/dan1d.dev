@@ -109,7 +109,7 @@ export default function CardPage() {
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-black text-white shadow-lg"
             style={{
-              background: "linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)",
+              background: "linear-gradient(135deg, #00ff41 0%, #39ff14 100%)",
             }}
           >
             DD
@@ -120,7 +120,7 @@ export default function CardPage() {
             <h1
               className="text-2xl font-extrabold tracking-tight mb-1"
               style={{
-                background: "linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)",
+                background: "linear-gradient(135deg, #00ff41 0%, #39ff14 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -148,7 +148,7 @@ export default function CardPage() {
                   aria-label="GitHub"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2.5 rounded-xl bg-white/10 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-400/40 text-slate-300 hover:text-cyan-400 transition-all duration-200"
+                  className="p-2.5 rounded-xl bg-white/10 hover:bg-green-500/20 border border-white/10 hover:border-green-400/40 text-slate-300 hover:text-green-400 transition-all duration-200"
                 >
                   <GitHubIcon />
                 </a>
@@ -164,7 +164,7 @@ export default function CardPage() {
                   aria-label="LinkedIn"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2.5 rounded-xl bg-white/10 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-400/40 text-slate-300 hover:text-cyan-400 transition-all duration-200"
+                  className="p-2.5 rounded-xl bg-white/10 hover:bg-green-500/20 border border-white/10 hover:border-green-400/40 text-slate-300 hover:text-green-400 transition-all duration-200"
                 >
                   <LinkedInIcon />
                 </a>
@@ -178,7 +178,7 @@ export default function CardPage() {
                 <a
                   href={em.url}
                   aria-label="Email"
-                  className="p-2.5 rounded-xl bg-white/10 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-400/40 text-slate-300 hover:text-cyan-400 transition-all duration-200"
+                  className="p-2.5 rounded-xl bg-white/10 hover:bg-green-500/20 border border-white/10 hover:border-green-400/40 text-slate-300 hover:text-green-400 transition-all duration-200"
                 >
                   <MailIcon />
                 </a>
@@ -210,7 +210,7 @@ export default function CardPage() {
                 size={120}
                 data-testid="card-qr"
                 bgColor="transparent"
-                fgColor="#06b6d4"
+                fgColor="#00ff41"
                 level="M"
               />
             </div>
@@ -224,7 +224,7 @@ export default function CardPage() {
                 data-testid="save-contact-btn"
                 onClick={downloadVCard}
                 aria-label="Save Contact"
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm text-black bg-cyan-400 hover:bg-cyan-300 transition-colors duration-200 shadow-lg shadow-cyan-500/20"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm text-black bg-green-400 hover:bg-green-300 transition-colors duration-200 shadow-lg shadow-green-500/20"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -247,7 +247,7 @@ export default function CardPage() {
               {/* View Portfolio */}
               <a
                 href="/"
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm text-cyan-400 border border-cyan-400/50 hover:border-cyan-400 hover:bg-cyan-400/10 transition-all duration-200"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm text-green-400 border border-green-400/50 hover:border-green-400 hover:bg-green-400/10 transition-all duration-200"
               >
                 View Portfolio
               </a>

@@ -28,6 +28,24 @@ export interface SkylineCell {
   color: string;
 }
 
+export interface RepoContribution {
+  name: string;           // repo name (e.g. "dan1d/codeprism")
+  contributions: number;  // commit count to this repo
+  url: string;
+  language?: string;
+  stars?: number;
+}
+
+export interface DetailedContributions {
+  totalCommits: number;
+  totalPRs: number;
+  totalIssues: number;
+  totalReviews: number;
+  totalRepos: number;
+  restrictedCount: number;  // private contributions
+  topRepos: RepoContribution[];
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -45,10 +63,27 @@ const DAYS_PER_WEEK = 7;
 
 const GITHUB_GRAPHQL_URL = "https://api.github.com/graphql";
 
-const CONTRIBUTIONS_QUERY = `
+const DETAILED_CONTRIBUTIONS_QUERY = `
   query($username: String!, $from: DateTime, $to: DateTime) {
     user(login: $username) {
       contributionsCollection(from: $from, to: $to) {
+        totalCommitContributions
+        totalPullRequestContributions
+        totalIssueContributions
+        totalPullRequestReviewContributions
+        totalRepositoriesWithContributedCommits
+        restrictedContributionsCount
+        commitContributionsByRepository(maxRepositories: 10) {
+          repository {
+            nameWithOwner
+            url
+            primaryLanguage { name }
+            stargazerCount
+          }
+          contributions {
+            totalCount
+          }
+        }
         contributionCalendar {
           totalContributions
           weeks {
@@ -119,6 +154,63 @@ export function transformContributionData(raw: unknown): ContributionData {
 }
 
 // ---------------------------------------------------------------------------
+// transformDetailedContributions
+// ---------------------------------------------------------------------------
+
+/**
+ * Extracts detailed contribution statistics from a GitHub GraphQL response.
+ *
+ * Returns null when the response does not contain the detailed fields (e.g.
+ * when the response came from the old calendar-only query or is malformed).
+ */
+export function transformDetailedContributions(
+  raw: unknown
+): DetailedContributions | null {
+  if (raw == null) return null;
+
+  try {
+    const collection = (raw as any)?.data?.user?.contributionsCollection;
+
+    if (collection == null) return null;
+
+    // If the detailed numeric fields are absent, this isn't a detailed response
+    if (typeof collection.totalCommitContributions !== "number") return null;
+
+    const rawRepos: any[] = Array.isArray(
+      collection.commitContributionsByRepository
+    )
+      ? collection.commitContributionsByRepository
+      : [];
+
+    const topRepos: RepoContribution[] = rawRepos.map((entry: any) => ({
+      name: String(entry?.repository?.nameWithOwner ?? ""),
+      contributions:
+        typeof entry?.contributions?.totalCount === "number"
+          ? entry.contributions.totalCount
+          : 0,
+      url: String(entry?.repository?.url ?? ""),
+      language: entry?.repository?.primaryLanguage?.name ?? undefined,
+      stars:
+        typeof entry?.repository?.stargazerCount === "number"
+          ? entry.repository.stargazerCount
+          : undefined,
+    }));
+
+    return {
+      totalCommits: collection.totalCommitContributions,
+      totalPRs: collection.totalPullRequestContributions ?? 0,
+      totalIssues: collection.totalIssueContributions ?? 0,
+      totalReviews: collection.totalPullRequestReviewContributions ?? 0,
+      totalRepos: collection.totalRepositoriesWithContributedCommits ?? 0,
+      restrictedCount: collection.restrictedContributionsCount ?? 0,
+      topRepos,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // generateSkylineData
 // ---------------------------------------------------------------------------
 
@@ -172,11 +264,14 @@ export function generateSkylineData(data: ContributionData): SkylineCell[] {
 /**
  * Fetches contribution data for the given username via the GitHub GraphQL API.
  * Requires a valid personal access token.
+ *
+ * Returns both the calendar data (ContributionData) and the detailed
+ * statistics (DetailedContributions) extracted from the same response.
  */
 export async function fetchContributions(
   username: string,
   token: string
-): Promise<ContributionData> {
+): Promise<{ data: ContributionData; detailed: DetailedContributions | null }> {
   const now = new Date();
   const from = new Date(
     Date.UTC(now.getUTCFullYear() - 1, now.getUTCMonth(), now.getUTCDate())
@@ -190,7 +285,7 @@ export async function fetchContributions(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      query: CONTRIBUTIONS_QUERY,
+      query: DETAILED_CONTRIBUTIONS_QUERY,
       variables: { username, from, to },
     }),
   });
@@ -202,7 +297,10 @@ export async function fetchContributions(
   }
 
   const raw: unknown = await response.json();
-  return transformContributionData(raw);
+  return {
+    data: transformContributionData(raw),
+    detailed: transformDetailedContributions(raw),
+  };
 }
 
 // ---------------------------------------------------------------------------

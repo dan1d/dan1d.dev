@@ -42,7 +42,7 @@ export default function ModelViewerWrapper({
         height: "100%",
         minHeight: "300px",
         background: "transparent",
-        "--progress-bar-color": "#22d3ee",
+        "--progress-bar-color": "#00ff41",
         "--progress-mask": "transparent",
       } as React.CSSProperties}
     />

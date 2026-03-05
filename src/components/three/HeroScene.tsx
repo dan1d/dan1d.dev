@@ -4,6 +4,7 @@ import { Suspense, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Float, Stars, MeshDistortMaterial, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
+import MatrixRain from "./MatrixRain";
 
 function CrystalPrism() {
   const meshRef = useRef<THREE.Mesh>(null);
@@ -19,8 +20,8 @@ function CrystalPrism() {
       <mesh ref={meshRef} castShadow>
         <octahedronGeometry args={[1.6, 0]} />
         <MeshDistortMaterial
-          color="#06b6d4"
-          emissive="#8b5cf6"
+          color="#00ff41"
+          emissive="#39ff14"
           emissiveIntensity={0.25}
           distort={0.3}
           speed={2}
@@ -49,8 +50,8 @@ function SecondaryOrb() {
     <mesh ref={meshRef}>
       <icosahedronGeometry args={[0.55, 1]} />
       <MeshDistortMaterial
-        color="#8b5cf6"
-        emissive="#06b6d4"
+        color="#39ff14"
+        emissive="#00ff41"
         emissiveIntensity={0.2}
         distort={0.4}
         speed={3}
@@ -78,8 +79,8 @@ function TertiaryOrb() {
     <mesh ref={meshRef}>
       <tetrahedronGeometry args={[0.4, 0]} />
       <MeshDistortMaterial
-        color="#06b6d4"
-        emissive="#06b6d4"
+        color="#00ff41"
+        emissive="#00ff41"
         emissiveIntensity={0.35}
         distort={0.2}
         speed={2.5}
@@ -97,10 +98,10 @@ function Scene() {
     <>
       {/* Ambient and directional lighting */}
       <ambientLight intensity={0.2} />
-      <directionalLight position={[5, 5, 5]} intensity={0.8} color="#06b6d4" />
-      <directionalLight position={[-5, -5, 3]} intensity={0.5} color="#8b5cf6" />
-      <pointLight position={[0, 0, 3]} intensity={1.5} color="#06b6d4" distance={8} />
-      <pointLight position={[3, 2, -2]} intensity={0.8} color="#8b5cf6" distance={6} />
+      <directionalLight position={[5, 5, 5]} intensity={0.8} color="#00ff41" />
+      <directionalLight position={[-5, -5, 3]} intensity={0.5} color="#39ff14" />
+      <pointLight position={[0, 0, 3]} intensity={1.5} color="#00ff41" distance={8} />
+      <pointLight position={[3, 2, -2]} intensity={0.8} color="#39ff14" distance={6} />
 
       {/* Star field background */}
       <Stars
@@ -112,6 +113,18 @@ function Scene() {
         fade
         speed={0.5}
       />
+
+      {/* Matrix digital rain — positioned behind crystal */}
+      <group position={[0, 0, -3]}>
+        <MatrixRain
+          columnCount={40}
+          rowCount={15}
+          speed={1.0}
+          opacity={0.85}
+          color="#00ff41"
+          area={[20, 10]}
+        />
+      </group>
 
       {/* Main crystal prism */}
       <CrystalPrism />
