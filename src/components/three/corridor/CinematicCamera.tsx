@@ -46,7 +46,7 @@ export function CinematicCamera({ onIntroComplete, chromaticOffset }: CinematicC
       // Hard zoom toward figures
       const p = (t - 6.0) / 1.5;
       const e = 1 - Math.pow(1 - p, 3);
-      z = -10 - e * 6; // -10 → -16
+      z = -10 - e * 9; // -10 → -19
       x = Math.sin(t * 0.3) * 0.03 * (1 - p);
       y = 0;
       const fade = Math.max(0.0006, (1 - p) * 0.005);
@@ -55,7 +55,7 @@ export function CinematicCamera({ onIntroComplete, chromaticOffset }: CinematicC
     } else {
       // Background drift
       const dt = t - 7.5;
-      z = -16 + Math.sin(dt * 0.12) * 0.3;
+      z = -19 + Math.sin(dt * 0.12) * 0.3;
       x = Math.sin(dt * 0.2) * 0.08;
       y = Math.cos(dt * 0.17) * 0.05;
 
@@ -83,7 +83,7 @@ export function CinematicCamera({ onIntroComplete, chromaticOffset }: CinematicC
 
     chromaticOffset.set(caX, caY);
 
-    if (t >= 7.5 && !doneRef.current) {
+    if (t >= 7.5 && !doneRef.current) { // camera reaches -19 at t=7.5
       doneRef.current = true;
       onIntroComplete?.();
     }

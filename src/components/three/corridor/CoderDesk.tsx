@@ -160,11 +160,16 @@ const SCREEN_FRAG = `
 
 // ─── Monitor ────────────────────────────────────────────────────────────────
 
+// Logo fade-in: starts at LOGO_FADE_START seconds, takes LOGO_FADE_DUR to reach full opacity
+const LOGO_FADE_START = 5.5; // after "Wake up, dan1d..." finishes
+const LOGO_FADE_DUR = 2.0;
+
 function Monitor({ position, rotation = [0, 0, 0] as [number, number, number] }: {
   position: [number, number, number];
   rotation?: [number, number, number];
 }) {
   const matRef = useRef<THREE.ShaderMaterial>(null);
+  const logoMatRef = useRef<THREE.MeshBasicMaterial>(null);
   const logoTex = useMemo(() => buildLogoTexture(), []);
 
   const screenMat = useMemo(
@@ -182,9 +187,13 @@ function Monitor({ position, rotation = [0, 0, 0] as [number, number, number] }:
 
   useFrame(({ clock }) => {
     if (matRef.current) matRef.current.uniforms.uTime.value = clock.elapsedTime;
+    if (logoMatRef.current) {
+      const t = clock.elapsedTime;
+      logoMatRef.current.opacity = t < LOGO_FADE_START ? 0 : Math.min(1, (t - LOGO_FADE_START) / LOGO_FADE_DUR);
+    }
   });
 
-  const monW = 0.7, monH = 0.45, bezelT = 0.03;
+  const monW = 1.2, monH = 0.5, bezelT = 0.03;
 
   return (
     <group position={position} rotation={rotation}>
@@ -200,15 +209,16 @@ function Monitor({ position, rotation = [0, 0, 0] as [number, number, number] }:
         <primitive object={screenMat} ref={matRef} attach="material" />
       </mesh>
 
-      {/* "dan1d.dev" on the back of the monitor */}
-      <mesh position={[0, monH / 2, -0.017]} rotation={[0, Math.PI, 0]}>
-        <planeGeometry args={[monW * 0.8, monH * 0.4]} />
+      {/* "dan1d.dev" on screen, over the rain */}
+      <mesh position={[0, monH / 2, 0.018]}>
+        <planeGeometry args={[monW * 0.9, monH * 0.45]} />
         <meshBasicMaterial
+          ref={logoMatRef}
           map={logoTex}
           transparent
           blending={THREE.AdditiveBlending}
           depthWrite={false}
-          opacity={0.9}
+          opacity={0}
         />
       </mesh>
 
@@ -233,23 +243,27 @@ function Monitor({ position, rotation = [0, 0, 0] as [number, number, number] }:
 // ─── "dan1d.dev" back-of-monitor logo texture ───────────────────────────────
 
 function buildLogoTexture(): THREE.CanvasTexture {
-  const W = 256, H = 128;
+  const W = 512, H = 128;
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
   ctx.clearRect(0, 0, W, H);
 
-  // Glow
-  ctx.shadowColor = "#00ff41";
-  ctx.shadowBlur = 16;
-  ctx.fillStyle = "#00ff41";
-  ctx.font = "bold 32px monospace";
+  ctx.font = "bold 64px monospace";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
+
+  // Outer glow
+  ctx.shadowColor = "#00ff41";
+  ctx.shadowBlur = 24;
+  ctx.fillStyle = "#00ff41";
   ctx.fillText("dan1d.dev", W / 2, H / 2);
-  // Second pass for extra glow
-  ctx.shadowBlur = 8;
+  // Extra glow pass
+  ctx.shadowBlur = 12;
+  ctx.fillText("dan1d.dev", W / 2, H / 2);
+  // Crisp pass (no blur)
+  ctx.shadowBlur = 0;
   ctx.fillText("dan1d.dev", W / 2, H / 2);
 
   const tex = new THREE.CanvasTexture(canvas);
@@ -427,8 +441,16 @@ function CoderSilhouette({ position }: { position: [number, number, number] }) {
 
 function PCTower({ position }: { position: [number, number, number] }) {
   const logoTex = useMemo(() => buildLogoTexture(), []);
+  const logoMatRef = useRef<THREE.MeshBasicMaterial>(null);
 
-  const caseW = 0.25, caseH = 0.65, caseD = 0.5;
+  const caseW = 0.3, caseH = 0.8, caseD = 0.55;
+
+  useFrame(({ clock }) => {
+    if (logoMatRef.current) {
+      const t = clock.elapsedTime;
+      logoMatRef.current.opacity = t < LOGO_FADE_START ? 0 : Math.min(0.7, ((t - LOGO_FADE_START) / LOGO_FADE_DUR) * 0.7);
+    }
+  });
 
   return (
     <group position={position}>
@@ -448,11 +470,12 @@ function PCTower({ position }: { position: [number, number, number] }) {
       <mesh position={[0, caseH / 2, caseD / 2 + 0.001]}>
         <planeGeometry args={[caseW * 0.85, caseH * 0.25]} />
         <meshBasicMaterial
+          ref={logoMatRef}
           map={logoTex}
           transparent
           blending={THREE.AdditiveBlending}
           depthWrite={false}
-          opacity={0.7}
+          opacity={0}
         />
       </mesh>
 
@@ -485,20 +508,14 @@ export function CoderDesk({ position = [0, 0, 0] }: CoderDeskProps) {
       {/* Desk */}
       <Desk position={[0, deskY, 0]} />
 
-      {/* Main monitor — angled ~25° left so screen faces camera */}
+      {/* Single wide monitor — centered, facing camera */}
       <Monitor
-        position={[-0.15, deskY + 0.02, -0.15]}
-        rotation={[0, 0.4, 0]}
-      />
-
-      {/* Second monitor — angled right, adds depth */}
-      <Monitor
-        position={[0.45, deskY + 0.02, -0.12]}
-        rotation={[0, -0.35, 0]}
+        position={[0.1, deskY + 0.02, -0.15]}
+        rotation={[0, 0, 0]}
       />
 
       {/* PC tower on the floor, right side of desk */}
-      <PCTower position={[1.05, deskY - 0.58, -0.05]} />
+      <PCTower position={[1.15, deskY - 0.58, -0.05]} />
 
       {/* Chair behind person */}
       <Chair position={[0, deskY - 0.02, chairOffset]} />

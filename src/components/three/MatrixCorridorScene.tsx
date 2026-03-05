@@ -76,7 +76,7 @@ function CorridorScene({ onIntroComplete }: { onIntroComplete?: () => void }) {
       <CorridorStructure atlas={atlas} />
 
       {/* Coder at desk — someone coding at the end of the corridor */}
-      <CoderDesk position={[0, 0, -23]} />
+      <CoderDesk position={[-0.4, 0, -23]} />
 
       <EffectComposer>
         <Bloom intensity={2.0} luminanceThreshold={0.15} luminanceSmoothing={0.85} mipmapBlur />
