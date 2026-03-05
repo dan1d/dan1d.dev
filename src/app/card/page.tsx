@@ -605,10 +605,7 @@ export default function CardPage() {
         }
       `}</style>
 
-      <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-black overflow-hidden font-mono">
-        {/* 3D animated star background */}
-        <CardScene />
-
+      <div className="relative min-h-screen w-full flex flex-col bg-black overflow-hidden font-mono">
         {/* Full-screen matrix rain */}
         <FullScreenMatrixRain />
 
@@ -659,8 +656,24 @@ export default function CardPage() {
           </div>
         </nav>
 
-        {/* ── Main card area ──────────────────────────────────────────────── */}
-        <main className="relative z-10 w-full max-w-[500px] mx-auto px-4 py-20">
+        {/* ── Two-column layout: Spoon left, Card right ───────────────────── */}
+        <div className="relative z-10 flex-1 flex items-center justify-center w-full max-w-7xl mx-auto px-4 py-20">
+          {/* Left: 3D Spoon Scene */}
+          <div className="hidden lg:block relative w-1/2 h-[600px]" style={{ animation: "card-entrance 1.2s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both" }}>
+            <CardScene />
+            {/* "There is no spoon" quote */}
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center">
+              <p className="text-[11px] text-green-400/40 tracking-[0.2em] italic">
+                &ldquo;There is no spoon.&rdquo;
+              </p>
+              <p className="text-[9px] text-green-400/20 tracking-[0.3em] mt-1">
+                &mdash; SPOON BOY
+              </p>
+            </div>
+          </div>
+
+          {/* Right: Card content */}
+          <main className="relative w-full lg:w-1/2 max-w-[500px] mx-auto lg:mx-0 lg:pl-8">
           {/* Terminal header above card */}
           <div
             className="mb-6 text-center"
@@ -982,6 +995,7 @@ export default function CardPage() {
             </p>
           </div>
         </main>
+        </div>
       </div>
     </>
   );

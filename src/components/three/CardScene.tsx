@@ -1,42 +1,402 @@
 "use client";
 
-import { Suspense, useRef, useMemo } from "react";
+import { Suspense, useRef, useMemo, useCallback } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
 import * as THREE from "three";
 
 // ── Constants ──────────────────────────────────────────────────────────
 const GREEN = "#00ff41";
-const BRIGHT_GREEN = "#39ff14";
-const PARTICLE_COUNT = 120;
+const DARK_GREEN = "#003b00";
+const GLOW_GREEN = "#00ff41";
+const PARTICLE_COUNT = 60;
+const CODE_CHAR_COUNT = 18;
+const CYCLE_DURATION = 12; // seconds
 
-// Characters for the glyph atlas — Latin + digits + symbols only (NO katakana/CJK)
-const GLYPH_CHARS =
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*+=<>{}[]";
-const GLYPH_COLS = 7;
-const GLYPH_ROWS = Math.ceil(GLYPH_CHARS.length / GLYPH_COLS);
+// Latin + symbols only, NO CJK/katakana
+const CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*+=<>{}[]~^|/\\";
 
-// ── Glyph atlas builder ────────────────────────────────────────────────
-function buildGlyphAtlas(): THREE.CanvasTexture {
-  const cellSize = 64;
+// ── Utility: smoothstep ────────────────────────────────────────────────
+function smoothstep(edge0: number, edge1: number, x: number): number {
+  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
+// ── Utility: lerp ──────────────────────────────────────────────────────
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+// ── Build spoon geometry ───────────────────────────────────────────────
+// Spoon oriented vertically: handle at bottom (negative Y), bowl at top (positive Y)
+function buildSpoonGeometry(): THREE.BufferGeometry {
+  // Spine points for a spoon shape using CatmullRomCurve3
+  const spinePoints = [
+    new THREE.Vector3(0, -1.5, 0),   // handle bottom
+    new THREE.Vector3(0, -1.0, 0),   // handle
+    new THREE.Vector3(0, -0.5, 0),   // handle
+    new THREE.Vector3(0, 0.0, 0),    // handle top
+    new THREE.Vector3(0, 0.3, 0),    // neck start
+    new THREE.Vector3(0, 0.55, 0),   // neck middle
+    new THREE.Vector3(0, 0.75, 0),   // neck end / bowl start
+    new THREE.Vector3(0, 1.0, 0),    // bowl
+    new THREE.Vector3(0, 1.2, 0),    // bowl widest
+    new THREE.Vector3(0, 1.4, 0),    // bowl upper
+    new THREE.Vector3(0, 1.55, 0),   // bowl tip
+  ];
+
+  const spine = new THREE.CatmullRomCurve3(spinePoints, false, "catmullrom", 0.5);
+  const spineLength = spinePoints.length;
+
+  // Radius function along the spine (0..1 parameter)
+  // handle: thin, neck: taper, bowl: wide concave ellipsoid
+  function getRadius(t: number): number {
+    if (t < 0.45) {
+      // Handle: thin cylinder
+      return 0.06;
+    } else if (t < 0.6) {
+      // Neck: taper from handle to bowl
+      const nt = (t - 0.45) / 0.15;
+      return lerp(0.06, 0.28, smoothstep(0, 1, nt));
+    } else if (t < 0.95) {
+      // Bowl: ellipsoidal bulge
+      const bt = (t - 0.6) / 0.35;
+      // Parabolic bowl shape
+      const bowlRadius = 0.28 + 0.12 * Math.sin(bt * Math.PI);
+      return bowlRadius;
+    } else {
+      // Tip: close off
+      const tt = (t - 0.95) / 0.05;
+      return lerp(0.28, 0.05, tt);
+    }
+  }
+
+  // Build tube-like geometry by sampling spine and creating rings
+  const segments = 64;
+  const radialSegments = 16;
+  const vertices: number[] = [];
+  const indices: number[] = [];
+
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const point = spine.getPointAt(t);
+    const tangent = spine.getTangentAt(t).normalize();
+
+    // Build a coordinate frame
+    const up = Math.abs(tangent.y) > 0.99
+      ? new THREE.Vector3(1, 0, 0)
+      : new THREE.Vector3(0, 1, 0);
+    const binormal = new THREE.Vector3().crossVectors(tangent, up).normalize();
+    const normal = new THREE.Vector3().crossVectors(binormal, tangent).normalize();
+
+    const radius = getRadius(t);
+
+    // For the bowl section, make it concave (flatten the front)
+    for (let j = 0; j <= radialSegments; j++) {
+      const angle = (j / radialSegments) * Math.PI * 2;
+      let rx = radius;
+      let rz = radius;
+
+      // Bowl concavity: flatten the front face (positive Z side)
+      if (t > 0.6 && t < 0.95) {
+        const bt = (t - 0.6) / 0.35;
+        const concavity = Math.sin(bt * Math.PI) * 0.4;
+        const cosA = Math.cos(angle);
+        if (cosA > 0) {
+          // Push front inward for concave bowl
+          rz *= (1 - concavity * cosA * cosA);
+        }
+      }
+
+      const x = point.x + (Math.cos(angle) * rx * normal.x + Math.sin(angle) * rz * binormal.x);
+      const y = point.y + (Math.cos(angle) * rx * normal.y + Math.sin(angle) * rz * binormal.y);
+      const z = point.z + (Math.cos(angle) * rx * normal.z + Math.sin(angle) * rz * binormal.z);
+
+      vertices.push(x, y, z);
+    }
+  }
+
+  // Build faces
+  for (let i = 0; i < segments; i++) {
+    for (let j = 0; j < radialSegments; j++) {
+      const a = i * (radialSegments + 1) + j;
+      const b = a + 1;
+      const c = (i + 1) * (radialSegments + 1) + j;
+      const d = c + 1;
+
+      indices.push(a, c, b);
+      indices.push(b, c, d);
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+
+  return geometry;
+}
+
+// ── Spoon mesh component ───────────────────────────────────────────────
+function BendingSpoon() {
+  const wireRef = useRef<THREE.Mesh>(null);
+  const solidRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
+
+  // Build geometry and store original positions
+  const { geometry, originalPositions } = useMemo(() => {
+    const geo = buildSpoonGeometry();
+    const posAttr = geo.getAttribute("position") as THREE.BufferAttribute;
+    const original = new Float32Array(posAttr.array.length);
+    original.set(posAttr.array as Float32Array);
+    return { geometry: geo, originalPositions: original };
+  }, []);
+
+  // Clone geometry for each mesh layer
+  const wireGeo = useMemo(() => geometry.clone(), [geometry]);
+  const solidGeo = useMemo(() => geometry.clone(), [geometry]);
+  const glowGeo = useMemo(() => {
+    const g = geometry.clone();
+    // Scale up slightly for glow shell
+    const pos = g.getAttribute("position") as THREE.BufferAttribute;
+    const arr = pos.array as Float32Array;
+    for (let i = 0; i < arr.length; i += 3) {
+      const len = Math.sqrt(arr[i] ** 2 + arr[i + 1] ** 2 + arr[i + 2] ** 2);
+      if (len > 0) {
+        const scale = 1.08;
+        // Only scale the radial component, not the Y position
+        arr[i] *= scale;
+        arr[i + 2] *= scale;
+      }
+    }
+    pos.needsUpdate = true;
+    return g;
+  }, [geometry]);
+
+  const glowOriginal = useMemo(() => {
+    const posAttr = glowGeo.getAttribute("position") as THREE.BufferAttribute;
+    const orig = new Float32Array(posAttr.array.length);
+    orig.set(posAttr.array as Float32Array);
+    return orig;
+  }, [glowGeo]);
+
+  // Deform vertices based on animation phase
+  const deformVertices = useCallback(
+    (
+      targetArr: Float32Array,
+      srcArr: Float32Array,
+      time: number
+    ) => {
+      const cycleTime = time % CYCLE_DURATION;
+      const vertCount = srcArr.length / 3;
+
+      for (let i = 0; i < vertCount; i++) {
+        const i3 = i * 3;
+        let ox = srcArr[i3];
+        let oy = srcArr[i3 + 1];
+        let oz = srcArr[i3 + 2];
+
+        // Normalize height to 0..1 range (handle at -1.5, bowl at 1.55)
+        const heightNorm = (oy + 1.5) / 3.05;
+
+        // ── Phase 0 (0-3s): Gentle float/wobble ──
+        const p0Strength = smoothstep(0, 0.5, cycleTime) * (1 - smoothstep(2.5, 3.5, cycleTime));
+        if (p0Strength > 0) {
+          const wobbleX = Math.sin(time * 2.0 + oy * 3.0) * 0.015 * heightNorm;
+          const wobbleZ = Math.cos(time * 1.7 + oy * 2.5) * 0.012 * heightNorm;
+          const wobbleY = Math.sin(time * 1.3 + ox * 4.0) * 0.008;
+          ox += wobbleX * p0Strength;
+          oy += wobbleY * p0Strength;
+          oz += wobbleZ * p0Strength;
+        }
+
+        // ── Phase 1 (3-6s): Dramatic bend ──
+        const p1Strength = smoothstep(2.5, 3.5, cycleTime) * (1 - smoothstep(5.5, 6.5, cycleTime));
+        if (p1Strength > 0) {
+          // Bend proportional to height — top bends more
+          const bendAmount = heightNorm * heightNorm * 0.6;
+          const bendDir = Math.sin(time * 0.8) * 0.3 + 0.7; // mostly one direction
+          ox += bendAmount * bendDir * p1Strength;
+          // Add some compression on the inner side
+          oz += Math.sin(heightNorm * Math.PI) * 0.1 * p1Strength * Math.cos(time * 1.2);
+          // Slight Y compression at the bend point
+          oy -= Math.sin(heightNorm * Math.PI) * 0.08 * p1Strength;
+        }
+
+        // ── Phase 2 (6-9s): Twist/spiral ──
+        const p2Strength = smoothstep(5.5, 6.5, cycleTime) * (1 - smoothstep(8.5, 9.5, cycleTime));
+        if (p2Strength > 0) {
+          const twistAngle = heightNorm * Math.PI * 1.5 * p2Strength;
+          const cosT = Math.cos(twistAngle);
+          const sinT = Math.sin(twistAngle);
+          const rx = ox;
+          const rz = oz;
+          ox = rx * cosT - rz * sinT;
+          oz = rx * sinT + rz * cosT;
+          // Add some radial pulsing
+          const pulse = Math.sin(heightNorm * Math.PI * 2 + time * 3) * 0.03 * p2Strength;
+          ox += ox * pulse;
+          oz += oz * pulse;
+        }
+
+        // ── Phase 3 (9-12s): Reform with spring-back oscillation ──
+        const p3Strength = smoothstep(8.5, 9.5, cycleTime) * (1 - smoothstep(11.5, 12.0, cycleTime));
+        if (p3Strength > 0) {
+          const reformTime = cycleTime - 9.0;
+          // Decaying oscillation
+          const decay = Math.exp(-reformTime * 1.5);
+          const oscillation = Math.sin(reformTime * 8.0) * decay;
+          ox += heightNorm * 0.15 * oscillation * p3Strength;
+          oz += heightNorm * 0.1 * Math.sin(reformTime * 6.0) * decay * p3Strength;
+          oy += Math.sin(heightNorm * Math.PI) * 0.04 * oscillation * p3Strength;
+        }
+
+        // Global gentle float
+        oy += Math.sin(time * 0.5) * 0.03;
+
+        targetArr[i3] = ox;
+        targetArr[i3 + 1] = oy;
+        targetArr[i3 + 2] = oz;
+      }
+    },
+    []
+  );
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+
+    // Deform all three geometry layers
+    const meshes = [
+      { ref: wireRef, geo: wireGeo, orig: originalPositions },
+      { ref: solidRef, geo: solidGeo, orig: originalPositions },
+      { ref: glowRef, geo: glowGeo, orig: glowOriginal },
+    ];
+
+    for (const { ref, geo, orig } of meshes) {
+      if (!ref.current) continue;
+      const posAttr = geo.getAttribute("position") as THREE.BufferAttribute;
+      const arr = posAttr.array as Float32Array;
+      deformVertices(arr, orig, t);
+      posAttr.needsUpdate = true;
+      geo.computeVertexNormals();
+    }
+
+    // Gentle group rotation
+    if (groupRef.current) {
+      groupRef.current.rotation.y = Math.sin(t * 0.3) * 0.15;
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      {/* Wireframe shell */}
+      <mesh ref={wireRef} geometry={wireGeo}>
+        <meshBasicMaterial
+          color={GREEN}
+          wireframe
+          transparent
+          opacity={0.6}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Inner solid for depth */}
+      <mesh ref={solidRef} geometry={solidGeo}>
+        <meshBasicMaterial
+          color={DARK_GREEN}
+          transparent
+          opacity={0.35}
+          depthWrite={false}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Outer glow shell */}
+      <mesh ref={glowRef} geometry={glowGeo}>
+        <meshBasicMaterial
+          color={GLOW_GREEN}
+          wireframe
+          transparent
+          opacity={0.08}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+// ── Orbiting particles (InstancedMesh) ─────────────────────────────────
+function OrbitingParticles() {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+
+  const particleData = useMemo(() => {
+    const data = [];
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const orbitRadius = 1.2 + Math.random() * 2.0;
+      const orbitSpeed = 0.15 + Math.random() * 0.35;
+      const orbitPhase = Math.random() * Math.PI * 2;
+      const yOffset = (Math.random() - 0.5) * 3.0;
+      const yOscillation = 0.2 + Math.random() * 0.5;
+      const ySpeed = 0.3 + Math.random() * 0.4;
+      const scale = 0.008 + Math.random() * 0.018;
+      data.push({ orbitRadius, orbitSpeed, orbitPhase, yOffset, yOscillation, ySpeed, scale });
+    }
+    return data;
+  }, []);
+
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+
+  useFrame((state) => {
+    if (!meshRef.current) return;
+    const t = state.clock.elapsedTime;
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const p = particleData[i];
+      const angle = t * p.orbitSpeed + p.orbitPhase;
+      const x = Math.cos(angle) * p.orbitRadius;
+      const z = Math.sin(angle) * p.orbitRadius;
+      const y = p.yOffset + Math.sin(t * p.ySpeed + p.orbitPhase) * p.yOscillation;
+
+      dummy.position.set(x, y, z);
+      dummy.scale.setScalar(p.scale);
+      dummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, dummy.matrix);
+    }
+
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  });
+
+  return (
+    <instancedMesh ref={meshRef} args={[undefined, undefined, PARTICLE_COUNT]}>
+      <sphereGeometry args={[1, 6, 6]} />
+      <meshBasicMaterial
+        color={GREEN}
+        transparent
+        opacity={0.7}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </instancedMesh>
+  );
+}
+
+// ── Floating code characters ───────────────────────────────────────────
+function buildCharTexture(char: string): THREE.CanvasTexture {
+  const size = 64;
   const canvas = document.createElement("canvas");
-  canvas.width = GLYPH_COLS * cellSize;
-  canvas.height = GLYPH_ROWS * cellSize;
+  canvas.width = size;
+  canvas.height = size;
   const ctx = canvas.getContext("2d")!;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = `bold ${cellSize * 0.7}px monospace`;
+  ctx.clearRect(0, 0, size, size);
+  ctx.fillStyle = GREEN;
+  ctx.font = `bold ${size * 0.7}px monospace`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-
-  for (let i = 0; i < GLYPH_CHARS.length; i++) {
-    const col = i % GLYPH_COLS;
-    const row = Math.floor(i / GLYPH_COLS);
-    const x = col * cellSize + cellSize / 2;
-    const y = row * cellSize + cellSize / 2;
-    ctx.fillText(GLYPH_CHARS[i], x, y);
-  }
+  ctx.fillText(char, size / 2, size / 2);
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.minFilter = THREE.LinearFilter;
@@ -45,282 +405,99 @@ function buildGlyphAtlas(): THREE.CanvasTexture {
   return tex;
 }
 
-// ── Shader code ────────────────────────────────────────────────────────
+function FloatingCodeChars() {
+  const groupRef = useRef<THREE.Group>(null);
 
-const vertexShader = /* glsl */ `
-  uniform float uTime;
-  varying vec2 vUv;
-  varying vec3 vNormal;
-  varying vec3 vWorldPos;
-
-  void main() {
-    vUv = uv;
-    vNormal = normalize(normalMatrix * normal);
-
-    // Breathing displacement — subtle pulse outward/inward
-    float breath = sin(uTime * 0.8) * 0.02 + sin(uTime * 1.3 + position.y * 3.0) * 0.015;
-    vec3 displaced = position + normal * breath;
-
-    vWorldPos = (modelMatrix * vec4(displaced, 1.0)).xyz;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(displaced, 1.0);
-  }
-`;
-
-const fragmentShader = /* glsl */ `
-  uniform float uTime;
-  uniform sampler2D uGlyphAtlas;
-  uniform float uGlyphCols;
-  uniform float uGlyphRows;
-  uniform float uTotalGlyphs;
-
-  varying vec2 vUv;
-  varying vec3 vNormal;
-  varying vec3 vWorldPos;
-
-  // ── Pseudo-random ──
-  float hash(float n) {
-    return fract(sin(n) * 43758.5453123);
-  }
-
-  float hash2(vec2 p) {
-    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-  }
-
-  void main() {
-    // Grid parameters
-    float cols = 48.0;
-    float rows = 80.0;
-
-    // Cell coordinates
-    vec2 cellSize = vec2(1.0 / cols, 1.0 / rows);
-    float colIdx = floor(vUv.x * cols);
-    float rowIdx = floor(vUv.y * rows);
-
-    // Local UV within cell
-    vec2 cellUv = fract(vec2(vUv.x * cols, vUv.y * rows));
-
-    // Per-column random properties
-    float colSeed = hash(colIdx * 13.37);
-    float colSpeed = 0.5 + colSeed * 1.5; // different fall speeds
-    float colOffset = hash(colIdx * 7.13) * 100.0;
-    float colBrightBase = 0.3 + hash(colIdx * 3.91) * 0.4;
-
-    // Rain drop parameters
-    float dropLength = 6.0 + hash(colIdx * 11.3) * 14.0; // how many cells long
-    float scrollPos = uTime * colSpeed + colOffset;
-
-    // Which "drop" are we in? Each drop cycles through the column
-    float dropCycle = rows + dropLength;
-    float localPos = mod(rowIdx + scrollPos * rows, dropCycle);
-
-    // Distance from head of the drop (head is at localPos == 0)
-    float distFromHead = localPos;
-
-    // Brightness falloff from head
-    float dropBrightness = 0.0;
-    if (distFromHead < dropLength) {
-      // Head is brightest, fades along tail
-      float t = distFromHead / dropLength;
-      dropBrightness = (1.0 - t) * (1.0 - t); // quadratic falloff
-    }
-
-    // Character selection — changes over time for living effect
-    float charChangeSpeed = 3.0 + hash(colIdx * 5.7 + rowIdx * 2.3) * 8.0;
-    float charIdx = floor(hash2(vec2(colIdx, rowIdx + floor(uTime * charChangeSpeed))) * uTotalGlyphs);
-    charIdx = mod(charIdx, uTotalGlyphs);
-
-    // Look up glyph from atlas
-    float glyphCol = mod(charIdx, uGlyphCols);
-    float glyphRow = floor(charIdx / uGlyphCols);
-
-    vec2 glyphUv = vec2(
-      (glyphCol + cellUv.x) / uGlyphCols,
-      (glyphRow + cellUv.y) / uGlyphRows
-    );
-
-    vec4 glyphColor = texture2D(uGlyphAtlas, glyphUv);
-    float glyphAlpha = glyphColor.r; // white on transparent = use red channel
-
-    // Color mixing: head is bright white-green, tail fades to deep green
-    vec3 darkGreen = vec3(0.0, 0.15, 0.02);
-    vec3 baseGreen = vec3(0.0, 1.0, 0.255); // #00ff41
-    vec3 brightHead = vec3(0.8, 1.0, 0.85); // near-white green
-
-    float headProximity = 1.0 - smoothstep(0.0, 3.0, distFromHead);
-    vec3 charColor = mix(darkGreen, baseGreen, dropBrightness);
-    charColor = mix(charColor, brightHead, headProximity * dropBrightness);
-
-    // Add flicker to individual characters
-    float flicker = 0.85 + 0.15 * sin(uTime * 15.0 + colIdx * 7.0 + rowIdx * 13.0);
-    dropBrightness *= flicker;
-
-    // Fresnel-like edge glow for sphere depth
-    float fresnel = pow(1.0 - abs(dot(normalize(vNormal), vec3(0.0, 0.0, 1.0))), 2.0);
-    float edgeGlow = fresnel * 0.3;
-
-    // Final alpha
-    float alpha = glyphAlpha * dropBrightness + edgeGlow * 0.15;
-
-    // Final color
-    vec3 finalColor = charColor * glyphAlpha * dropBrightness + vec3(0.0, edgeGlow * 0.4, edgeGlow * 0.1);
-
-    // Subtle random sparkle on some cells
-    float sparkle = step(0.97, hash2(vec2(colIdx + floor(uTime * 2.0), rowIdx))) * 0.5;
-    finalColor += vec3(sparkle * 0.3, sparkle, sparkle * 0.4) * glyphAlpha;
-
-    gl_FragColor = vec4(finalColor, alpha);
-  }
-`;
-
-// ── Code Sphere component ──────────────────────────────────────────────
-function CodeSphere() {
-  const meshRef = useRef<THREE.Mesh>(null);
-
-  const glyphAtlas = useMemo(() => buildGlyphAtlas(), []);
-
-  const uniforms = useMemo(
-    () => ({
-      uTime: { value: 0 },
-      uGlyphAtlas: { value: glyphAtlas },
-      uGlyphCols: { value: GLYPH_COLS },
-      uGlyphRows: { value: GLYPH_ROWS },
-      uTotalGlyphs: { value: GLYPH_CHARS.length },
-    }),
-    [glyphAtlas]
-  );
-
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    uniforms.uTime.value = t;
-
-    if (meshRef.current) {
-      // Slow Y rotation + slight X wobble
-      meshRef.current.rotation.y = t * 0.08;
-      meshRef.current.rotation.x = Math.sin(t * 0.15) * 0.1;
-      meshRef.current.rotation.z = Math.sin(t * 0.12) * 0.03;
-    }
-  });
-
-  return (
-    <mesh ref={meshRef}>
-      <sphereGeometry args={[2, 64, 64]} />
-      <shaderMaterial
-        vertexShader={vertexShader}
-        fragmentShader={fragmentShader}
-        uniforms={uniforms}
-        transparent
-        side={THREE.DoubleSide}
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-      />
-    </mesh>
-  );
-}
-
-// ── Inner glow sphere ──────────────────────────────────────────────────
-function InnerGlow() {
-  const ref = useRef<THREE.Mesh>(null);
-
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    if (ref.current) {
-      const mat = ref.current.material as THREE.MeshBasicMaterial;
-      mat.opacity = 0.04 + Math.sin(t * 0.6) * 0.02;
-    }
-  });
-
-  return (
-    <mesh ref={ref}>
-      <sphereGeometry args={[1.85, 32, 32]} />
-      <meshBasicMaterial
-        color={GREEN}
-        transparent
-        opacity={0.05}
-        side={THREE.BackSide}
-        depthWrite={false}
-      />
-    </mesh>
-  );
-}
-
-// ── Ambient particles ──────────────────────────────────────────────────
-function AmbientParticles() {
-  const ref = useRef<THREE.Points>(null);
-
-  const { positions, speeds, phases } = useMemo(() => {
-    const pos = new Float32Array(PARTICLE_COUNT * 3);
-    const spd = new Float32Array(PARTICLE_COUNT);
-    const phs = new Float32Array(PARTICLE_COUNT);
-
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      // Distribute in a shell around the sphere
+  const charData = useMemo(() => {
+    const data = [];
+    for (let i = 0; i < CODE_CHAR_COUNT; i++) {
+      const char = CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+      const texture = buildCharTexture(char);
+      const radius = 1.8 + Math.random() * 2.2;
       const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      const r = 2.5 + Math.random() * 3.0;
-
-      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-      pos[i * 3 + 2] = r * Math.cos(phi);
-
-      spd[i] = 0.2 + Math.random() * 0.5;
-      phs[i] = Math.random() * Math.PI * 2;
+      const phi = (Math.random() - 0.5) * Math.PI * 0.8;
+      const speed = 0.05 + Math.random() * 0.15;
+      const size = 0.12 + Math.random() * 0.15;
+      const phase = Math.random() * Math.PI * 2;
+      data.push({ texture, radius, theta, phi, speed, size, phase });
     }
-
-    return { positions: pos, speeds: spd, phases: phs };
+    return data;
   }, []);
 
   useFrame((state) => {
-    if (!ref.current) return;
+    if (!groupRef.current) return;
     const t = state.clock.elapsedTime;
-    const posAttr = ref.current.geometry.getAttribute(
-      "position"
-    ) as THREE.BufferAttribute;
-    const arr = posAttr.array as Float32Array;
 
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const i3 = i * 3;
-      // Gentle orbital drift
-      const angle = t * speeds[i] * 0.1 + phases[i];
-      const ox = arr[i3];
-      const oz = arr[i3 + 2];
-      const r = Math.sqrt(ox * ox + oz * oz);
+    groupRef.current.children.forEach((child, i) => {
+      if (i >= charData.length) return;
+      const d = charData[i];
+      const angle = d.theta + t * d.speed;
+      const y = Math.sin(d.phi) * d.radius + Math.sin(t * 0.3 + d.phase) * 0.3;
+      const cosP = Math.cos(d.phi);
+      child.position.set(
+        Math.cos(angle) * d.radius * cosP,
+        y,
+        Math.sin(angle) * d.radius * cosP
+      );
+      // Face camera (billboard) — handled by lookAt in useFrame
+      child.lookAt(state.camera.position);
 
-      arr[i3] = Math.cos(angle) * r;
-      arr[i3 + 1] += Math.sin(t * speeds[i] + phases[i]) * 0.001;
-      arr[i3 + 2] = Math.sin(angle) * r;
-    }
-
-    posAttr.needsUpdate = true;
+      // Pulse opacity
+      const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
+      if (mat) {
+        mat.opacity = 0.3 + Math.sin(t * 2 + d.phase) * 0.15;
+      }
+    });
   });
 
   return (
-    <points ref={ref}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[positions, 3]}
-        />
-      </bufferGeometry>
-      <pointsMaterial
-        color={GREEN}
-        size={0.03}
-        transparent
-        opacity={0.6}
-        depthWrite={false}
-        sizeAttenuation
-        blending={THREE.AdditiveBlending}
-      />
-    </points>
+    <group ref={groupRef}>
+      {charData.map((d, i) => (
+        <mesh key={i}>
+          <planeGeometry args={[d.size, d.size]} />
+          <meshBasicMaterial
+            map={d.texture}
+            transparent
+            opacity={0.4}
+            depthWrite={false}
+            side={THREE.DoubleSide}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+      ))}
+    </group>
   );
 }
 
-// ── Camera auto-orbit ──────────────────────────────────────────────────
+// ── Pulsing point lights ───────────────────────────────────────────────
+function PulsingLights() {
+  const light1 = useRef<THREE.PointLight>(null);
+  const light2 = useRef<THREE.PointLight>(null);
+  const light3 = useRef<THREE.PointLight>(null);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    if (light1.current) light1.current.intensity = 0.8 + Math.sin(t * 0.7) * 0.4;
+    if (light2.current) light2.current.intensity = 0.6 + Math.sin(t * 1.1 + 1.0) * 0.3;
+    if (light3.current) light3.current.intensity = 0.7 + Math.sin(t * 0.9 + 2.0) * 0.35;
+  });
+
+  return (
+    <>
+      <pointLight ref={light1} position={[2, 1.5, 1]} color={GREEN} intensity={0.8} distance={8} decay={2} />
+      <pointLight ref={light2} position={[-1.5, -1, 2]} color={GREEN} intensity={0.6} distance={8} decay={2} />
+      <pointLight ref={light3} position={[0, 2, -2]} color={GREEN} intensity={0.7} distance={8} decay={2} />
+    </>
+  );
+}
+
+// ── Auto-orbiting camera ───────────────────────────────────────────────
 function AutoCamera() {
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    const radius = 5 + Math.sin(t * 0.1) * 0.5;
-    const angle = t * 0.08;
-    const height = Math.sin(t * 0.06) * 0.8;
+    const radius = 4.0 + Math.sin(t * 0.15) * 0.5; // 3.5 - 4.5
+    const angle = t * 0.12;
+    const height = Math.sin(t * 0.1) * 0.6; // gentle vertical oscillation
 
     state.camera.position.set(
       Math.sin(angle) * radius,
@@ -333,51 +510,26 @@ function AutoCamera() {
   return null;
 }
 
-// ── Pulsing center light ───────────────────────────────────────────────
-function CenterLight() {
-  const ref = useRef<THREE.PointLight>(null);
-
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    if (ref.current) {
-      ref.current.intensity = 1.0 + Math.sin(t * 0.5) * 0.4;
-    }
-  });
-
-  return (
-    <pointLight
-      ref={ref}
-      position={[0, 0, 0]}
-      color={BRIGHT_GREEN}
-      intensity={1.0}
-      distance={8}
-      decay={2}
-    />
-  );
-}
-
 // ── Main scene ─────────────────────────────────────────────────────────
 function Scene() {
   return (
     <>
-      <ambientLight intensity={0.03} color={GREEN} />
-      <CenterLight />
-
-      <fog attach="fog" args={["#000a00", 6, 16]} />
+      <fog attach="fog" args={["#000800", 4, 12]} />
 
       <Stars
-        radius={60}
-        depth={50}
-        count={600}
-        factor={1.2}
+        radius={50}
+        depth={40}
+        count={500}
+        factor={1.0}
         saturation={0.1}
         fade
-        speed={0.1}
+        speed={0.15}
       />
 
-      <CodeSphere />
-      <InnerGlow />
-      <AmbientParticles />
+      <PulsingLights />
+      <BendingSpoon />
+      <OrbitingParticles />
+      <FloatingCodeChars />
       <AutoCamera />
     </>
   );
@@ -388,7 +540,7 @@ export default function CardScene() {
   return (
     <div data-testid="card-canvas" className="absolute inset-0 w-full h-full">
       <Canvas
-        camera={{ position: [0, 0, 5], fov: 50 }}
+        camera={{ position: [0, 0, 4], fov: 50 }}
         gl={{ antialias: true, alpha: true }}
         dpr={[1, 1.5]}
       >
