@@ -36,12 +36,13 @@ function RotatingCrystal() {
   );
 }
 
-export default function ARPreviewScene() {
+export default function ARPreviewScene({ onCreated }: { onCreated?: (state: { gl: THREE.WebGLRenderer }) => void }) {
   return (
     <Canvas
       camera={{ position: [0, 0, 2.5], fov: 45 }}
       gl={{ antialias: true, alpha: true }}
       style={{ background: "transparent" }}
+      onCreated={onCreated}
     >
       <ambientLight intensity={0.3} />
       <pointLight position={[2, 3, 2]} intensity={1.5} color="#00ff41" />

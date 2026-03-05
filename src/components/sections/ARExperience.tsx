@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 
 // ─── Visibility hook — only mount WebGL when near viewport ───────────────────
@@ -52,6 +52,28 @@ export default function ARExperience() {
   const leftPanelRef = useRef<HTMLDivElement>(null);
   const rightPanelRef = useRef<HTMLDivElement>(null);
   const stepsRef = useRef<HTMLOListElement>(null);
+
+  // ─── WebGL context-loss recovery ──────────────────────────────────────────
+  const [canvasKey, setCanvasKey] = useState(0);
+  const cleanupRef = useRef<(() => void) | null>(null);
+
+  const handleCanvasCreated = useCallback(
+    (state: { gl: { domElement: HTMLCanvasElement } }) => {
+      cleanupRef.current?.();
+      const canvas = state.gl.domElement;
+      const onLost = (e: Event) => {
+        e.preventDefault();
+        setTimeout(() => setCanvasKey((k) => k + 1), 100);
+      };
+      canvas.addEventListener("webglcontextlost", onLost);
+      cleanupRef.current = () => canvas.removeEventListener("webglcontextlost", onLost);
+    },
+    []
+  );
+
+  useEffect(() => {
+    return () => { cleanupRef.current?.(); };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -331,7 +353,7 @@ export default function ARExperience() {
 
             {/* R3F Canvas — only mounts when section is near viewport */}
             <div className="absolute inset-0">
-              {canvasVisible ? <ARPreviewScene /> : <div className="w-full h-full bg-black" />}
+              {canvasVisible ? <ARPreviewScene key={canvasKey} onCreated={handleCanvasCreated} /> : <div className="w-full h-full bg-black" />}
             </div>
 
             {/* Bottom label */}
