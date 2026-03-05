@@ -2,6 +2,24 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
+
+// ─── Visibility hook — unmount WebGL when offscreen to free GPU context ───────
+
+function useCanvasVisibility(rootMargin = "200px") {
+  const ref = useRef<HTMLElement>(null);
+  const [visible, setVisible] = useState(true); // hero starts visible
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => setVisible(entry.isIntersecting),
+      { rootMargin }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [rootMargin]);
+  return { ref, visible };
+}
 import { siteConfig } from "@/data/projects";
 
 const MatrixCorridorScene = dynamic(
@@ -181,6 +199,7 @@ export default function Hero() {
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const [introComplete, setIntroComplete] = useState(false);
   const [showWakeUp, setShowWakeUp] = useState(false);
+  const { ref: sectionVisRef, visible: canvasVisible } = useCanvasVisibility("400px");
 
   const handleIntroComplete = useCallback(() => setIntroComplete(true), []);
 
@@ -291,11 +310,16 @@ export default function Hero() {
   return (
     <section
       id="hero"
+      ref={sectionVisRef}
       className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black"
     >
-      {/* 3D Matrix corridor — starts immediately */}
+      {/* 3D Matrix corridor — unmounts when scrolled offscreen to free WebGL context */}
       <div ref={canvasWrapperRef} className="absolute inset-0">
-        <MatrixCorridorScene onIntroComplete={handleIntroComplete} />
+        {canvasVisible ? (
+          <MatrixCorridorScene onIntroComplete={handleIntroComplete} />
+        ) : (
+          <div className="absolute inset-0 bg-black" data-testid="hero-canvas" />
+        )}
       </div>
 
       {/* "Wake up, dan1d..." typing text — appears after camera passes entrance wall */}
