@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 
 // ─── Visibility hook — only mount WebGL when near viewport ───────────────────
@@ -143,6 +143,35 @@ export default function GitHubSkyline() {
   const { ref: sectionRef, visible: canvasVisible } = useCanvasVisibility("400px");
   const canvasCardRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
+
+  // ─── WebGL context-loss recovery ────────────────────────────────────────────
+  // When multiple R3F Canvases coexist the browser may kill a context.
+  // We listen for contextlost and force a remount to re-acquire the context.
+  const [canvasKey, setCanvasKey] = useState(0);
+  const cleanupRef = useRef<(() => void) | null>(null);
+
+  const handleCanvasCreated = useCallback(
+    (state: { gl: { domElement: HTMLCanvasElement } }) => {
+      // Clean up any previous listener
+      cleanupRef.current?.();
+
+      const canvas = state.gl.domElement;
+      const onLost = (e: Event) => {
+        e.preventDefault(); // allow context restoration
+        // Force remount after a short delay so the old context is fully released
+        setTimeout(() => setCanvasKey((k) => k + 1), 100);
+      };
+
+      canvas.addEventListener("webglcontextlost", onLost);
+      cleanupRef.current = () => canvas.removeEventListener("webglcontextlost", onLost);
+    },
+    []
+  );
+
+  // Clean up listener on unmount
+  useEffect(() => {
+    return () => { cleanupRef.current?.(); };
+  }, []);
 
   const username = "dan1d";
 
@@ -479,7 +508,12 @@ export default function GitHubSkyline() {
             {loading ? (
               <SkylineSkeleton />
             ) : canvasVisible ? (
-              <SkylineScene data={contributions} onHover={setHoveredCell} />
+              <SkylineScene
+                key={canvasKey}
+                data={contributions}
+                onHover={setHoveredCell}
+                onCreated={handleCanvasCreated}
+              />
             ) : (
               <SkylineSkeleton />
             )}
