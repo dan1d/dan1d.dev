@@ -2,7 +2,6 @@ import Hero from "@/components/sections/Hero";
 import Projects from "@/components/sections/Projects";
 import ARExperience from "@/components/sections/ARExperience";
 import GitHubSkyline from "@/components/sections/GitHubSkyline";
-import Resume from "@/components/sections/Resume";
 import MatrixResume from "@/components/sections/MatrixResume";
 
 export default function Home() {
@@ -11,7 +10,6 @@ export default function Home() {
       <Hero />
       <Projects />
       <GitHubSkyline />
-      <Resume />
       <MatrixResume />
       <ARExperience />
       <footer className="relative z-[2] border-t border-green-400/15 bg-black px-6 py-12 text-center font-mono">

@@ -140,7 +140,7 @@ export default function MatrixResume() {
 
   return (
     <section
-      id="matrix-resume"
+      id="resume"
       ref={sectionRef}
       className="relative min-h-screen bg-black overflow-hidden flex items-center py-24"
     >
