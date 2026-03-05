@@ -254,16 +254,10 @@ function buildLogoTexture(): THREE.CanvasTexture {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  // Outer glow
+  // Subtle glow
   ctx.shadowColor = "#00ff41";
-  ctx.shadowBlur = 24;
+  ctx.shadowBlur = 4;
   ctx.fillStyle = "#00ff41";
-  ctx.fillText("dan1d.dev", W / 2, H / 2);
-  // Extra glow pass
-  ctx.shadowBlur = 12;
-  ctx.fillText("dan1d.dev", W / 2, H / 2);
-  // Crisp pass (no blur)
-  ctx.shadowBlur = 0;
   ctx.fillText("dan1d.dev", W / 2, H / 2);
 
   const tex = new THREE.CanvasTexture(canvas);
