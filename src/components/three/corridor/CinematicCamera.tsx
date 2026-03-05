@@ -5,9 +5,11 @@ import * as THREE from "three";
 export interface CinematicCameraProps {
   onIntroComplete?: () => void;
   chromaticOffset: THREE.Vector2;
+  /** When true, the camera intro animation begins. Until then, camera stays at z=5. */
+  started?: boolean;
 }
 
-export function CinematicCamera({ onIntroComplete, chromaticOffset }: CinematicCameraProps) {
+export function CinematicCamera({ onIntroComplete, chromaticOffset, started }: CinematicCameraProps) {
   const { camera } = useThree();
   const doneRef = useRef(false);
   const t0Ref = useRef(-1);
@@ -15,6 +17,12 @@ export function CinematicCamera({ onIntroComplete, chromaticOffset }: CinematicC
   const quakeRef = useRef({ intensity: 0, nextAt: 12 });
 
   useFrame(({ clock }) => {
+    // Don't start the intro until the scene is visible
+    if (!started) {
+      camera.position.set(0, 0, 5);
+      camera.lookAt(0, 0, -5);
+      return;
+    }
     if (t0Ref.current < 0) t0Ref.current = clock.elapsedTime;
     const t = clock.elapsedTime - t0Ref.current;
 

@@ -27,10 +27,10 @@ export default function Hero() {
   const handleIntroComplete = useCallback(() => setIntroComplete(true), []);
 
   // Fade in the corridor after the PageLoader intro finishes
-  // Total PageLoader duration: rain_in(1200) + text_form(1800) + text_hold(800) + rain_close(800) = 4600ms
+  // Total PageLoader duration: rain_in(1200) + text_form(1800) + text_hold(1000) + rain_close(800) = 4800ms
   // Start fading in corridor just as rain_close ends / fade_out begins
   useEffect(() => {
-    const timer = setTimeout(() => setSceneVisible(true), 4400);
+    const timer = setTimeout(() => setSceneVisible(true), 4600);
     return () => clearTimeout(timer);
   }, []);
 
@@ -145,7 +145,7 @@ export default function Hero() {
     >
       {/* 3D Matrix corridor — fills entire hero */}
       <div ref={canvasWrapperRef} className="absolute inset-0">
-        <MatrixCorridorScene onIntroComplete={handleIntroComplete} />
+        <MatrixCorridorScene onIntroComplete={handleIntroComplete} started={sceneVisible} />
       </div>
 
       {/* Fade-in from black (covers the first moment while WebGL initializes) */}

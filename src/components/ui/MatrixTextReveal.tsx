@@ -245,7 +245,7 @@ export default function MatrixTextReveal({
           const fontSize = cellFontSizes[idx];
           const char = MATRIX_CHARS[cellChars[idx]];
 
-          ctx.font = `bold ${fontSize}px monospace`;
+          ctx.font = `900 ${fontSize}px monospace`;
           if (isHead && brightness > 0.5) {
             const wb = Math.floor(180 + 75 * brightness);
             ctx.fillStyle = `rgb(${wb}, ${wb}, ${wb})`;
@@ -275,7 +275,7 @@ export default function MatrixTextReveal({
         if (alpha <= 0) continue;
 
         ctx.globalAlpha = alpha * inten;
-        ctx.font = `bold ${TEXT_CELL + 2}px monospace`;
+        ctx.font = `900 ${TEXT_CELL + 2}px monospace`;
         ctx.fillStyle = "#00ff41";
         ctx.fillText(cell.char, x, cy);
         ctx.globalAlpha = 1;
