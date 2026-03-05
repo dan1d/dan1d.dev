@@ -165,6 +165,7 @@ function Monitor({ position, rotation = [0, 0, 0] as [number, number, number] }:
   rotation?: [number, number, number];
 }) {
   const matRef = useRef<THREE.ShaderMaterial>(null);
+  const logoTex = useMemo(() => buildLogoTexture(), []);
 
   const screenMat = useMemo(
     () =>
@@ -199,6 +200,18 @@ function Monitor({ position, rotation = [0, 0, 0] as [number, number, number] }:
         <primitive object={screenMat} ref={matRef} attach="material" />
       </mesh>
 
+      {/* "dan1d.dev" on the back of the monitor */}
+      <mesh position={[0, monH / 2, -0.017]} rotation={[0, Math.PI, 0]}>
+        <planeGeometry args={[monW * 0.8, monH * 0.4]} />
+        <meshBasicMaterial
+          map={logoTex}
+          transparent
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          opacity={0.9}
+        />
+      </mesh>
+
       {/* Screen glow */}
       <pointLight position={[0, monH / 2, 0.4]} color="#00ff41" intensity={2.5} distance={3.5} decay={2} />
 
@@ -215,6 +228,33 @@ function Monitor({ position, rotation = [0, 0, 0] as [number, number, number] }:
       </mesh>
     </group>
   );
+}
+
+// ─── "dan1d.dev" back-of-monitor logo texture ───────────────────────────────
+
+function buildLogoTexture(): THREE.CanvasTexture {
+  const W = 256, H = 128;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d")!;
+  ctx.clearRect(0, 0, W, H);
+
+  // Glow
+  ctx.shadowColor = "#00ff41";
+  ctx.shadowBlur = 16;
+  ctx.fillStyle = "#00ff41";
+  ctx.font = "bold 32px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("dan1d.dev", W / 2, H / 2);
+  // Second pass for extra glow
+  ctx.shadowBlur = 8;
+  ctx.fillText("dan1d.dev", W / 2, H / 2);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
+  return tex;
 }
 
 // ─── Desk ───────────────────────────────────────────────────────────────────
@@ -383,6 +423,51 @@ function CoderSilhouette({ position }: { position: [number, number, number] }) {
   );
 }
 
+// ─── PC Tower ────────────────────────────────────────────────────────────────
+
+function PCTower({ position }: { position: [number, number, number] }) {
+  const logoTex = useMemo(() => buildLogoTexture(), []);
+
+  const caseW = 0.25, caseH = 0.65, caseD = 0.5;
+
+  return (
+    <group position={position}>
+      {/* Case body */}
+      <mesh position={[0, caseH / 2, 0]}>
+        <boxGeometry args={[caseW, caseH, caseD]} />
+        <meshBasicMaterial color="#060606" />
+      </mesh>
+
+      {/* Case edges */}
+      <lineSegments position={[0, caseH / 2, 0]}>
+        <edgesGeometry args={[new THREE.BoxGeometry(caseW, caseH, caseD)]} />
+        <lineBasicMaterial color="#00ff41" transparent opacity={0.08} />
+      </lineSegments>
+
+      {/* "dan1d.dev" logo on the side facing camera (+z) */}
+      <mesh position={[0, caseH / 2, caseD / 2 + 0.001]}>
+        <planeGeometry args={[caseW * 0.85, caseH * 0.25]} />
+        <meshBasicMaterial
+          map={logoTex}
+          transparent
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          opacity={0.7}
+        />
+      </mesh>
+
+      {/* Power LED */}
+      <mesh position={[caseW * 0.3, caseH * 0.85, caseD / 2 + 0.002]}>
+        <circleGeometry args={[0.008, 8]} />
+        <meshBasicMaterial color="#00ff41" />
+      </mesh>
+
+      {/* Subtle front panel glow */}
+      <pointLight position={[0, caseH / 2, caseD / 2 + 0.1]} color="#00ff41" intensity={0.3} distance={1} decay={2} />
+    </group>
+  );
+}
+
 // ─── Composed Coder Desk Scene ──────────────────────────────────────────────
 // Layout: camera approaches from +z. Person faces +z (toward camera).
 // Monitor is on desk between person and camera, angled so screen is visible.
@@ -411,6 +496,9 @@ export function CoderDesk({ position = [0, 0, 0] }: CoderDeskProps) {
         position={[0.45, deskY + 0.02, -0.12]}
         rotation={[0, -0.35, 0]}
       />
+
+      {/* PC tower on the floor, right side of desk */}
+      <PCTower position={[1.05, deskY - 0.58, -0.05]} />
 
       {/* Chair behind person */}
       <Chair position={[0, deskY - 0.02, chairOffset]} />
