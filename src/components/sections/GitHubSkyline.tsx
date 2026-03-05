@@ -5,20 +5,25 @@ import dynamic from "next/dynamic";
 
 // ─── Visibility hook — only mount WebGL when near viewport ───────────────────
 
-function useCanvasVisibility(rootMargin = "200px") {
+function useLazyMount(rootMargin = "400px") {
   const ref = useRef<HTMLElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || mounted) return;
     const io = new IntersectionObserver(
-      ([entry]) => setVisible(entry.isIntersecting),
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setMounted(true);
+          io.disconnect(); // once mounted, stay mounted forever
+        }
+      },
       { rootMargin }
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [rootMargin]);
-  return { ref, visible };
+  }, [rootMargin, mounted]);
+  return { ref, mounted };
 }
 import type { SkylineCell } from "@/components/three/SkylineScene";
 
@@ -140,7 +145,7 @@ export default function GitHubSkyline() {
   const [coords, setCoords] = useState<"geo" | "sector">("geo");
   const [flickerVisible, setFlickerVisible] = useState(true);
 
-  const { ref: sectionRef, visible: canvasVisible } = useCanvasVisibility("300px");
+  const { ref: sectionRef, mounted: canvasMounted } = useLazyMount("400px");
   const canvasCardRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
 
@@ -474,11 +479,11 @@ export default function GitHubSkyline() {
             </span>
           </div>
 
-          {/* ── Canvas — only mounts when section is near viewport ── */}
+          {/* ── Canvas — lazy-mounts when section nears viewport, stays mounted ── */}
           <div className="absolute inset-0 z-[1]">
             {loading ? (
               <SkylineSkeleton />
-            ) : canvasVisible ? (
+            ) : canvasMounted ? (
               <SkylineScene data={contributions} onHover={setHoveredCell} />
             ) : (
               <div className="w-full h-full bg-black" />
