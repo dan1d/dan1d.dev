@@ -7,7 +7,7 @@ import * as THREE from "three";
 
 // ── Constants ──────────────────────────────────────────────────────────
 const GREEN = "#00ff41";
-const DARK_GREEN = "#003b00";
+const DARK_GREEN = "#002200";
 const GLOW_GREEN = "#00ff41";
 const PARTICLE_COUNT = 60;
 const CODE_CHAR_COUNT = 18;
@@ -27,111 +27,242 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
-// ── Build spoon geometry ───────────────────────────────────────────────
-// Spoon oriented vertically: handle at bottom (negative Y), bowl at top (positive Y)
+// ── Build realistic spoon geometry ─────────────────────────────────────
+// Builds a spoon with proper concave bowl, flat handle, and smooth neck
+// using cross-section lofting with inner + outer bowl surfaces.
 function buildSpoonGeometry(): THREE.BufferGeometry {
-  // Spine points for a spoon shape using CatmullRomCurve3
-  const spinePoints = [
-    new THREE.Vector3(0, -1.5, 0),   // handle bottom
-    new THREE.Vector3(0, -1.0, 0),   // handle
-    new THREE.Vector3(0, -0.5, 0),   // handle
-    new THREE.Vector3(0, 0.0, 0),    // handle top
-    new THREE.Vector3(0, 0.3, 0),    // neck start
-    new THREE.Vector3(0, 0.55, 0),   // neck middle
-    new THREE.Vector3(0, 0.75, 0),   // neck end / bowl start
-    new THREE.Vector3(0, 1.0, 0),    // bowl
-    new THREE.Vector3(0, 1.2, 0),    // bowl widest
-    new THREE.Vector3(0, 1.4, 0),    // bowl upper
-    new THREE.Vector3(0, 1.55, 0),   // bowl tip
-  ];
+  const SLICES = 48; // number of cross-section slices along the spoon
+  const RING_PTS = 32; // points per cross-section ring
 
-  const spine = new THREE.CatmullRomCurve3(spinePoints, false, "catmullrom", 0.5);
-  const spineLength = spinePoints.length;
+  // Heights: handle bottom at y=-1.5, bowl rim at y=1.0
+  const yMin = -1.5;
+  const yMax = 1.0;
 
-  // Radius function along the spine (0..1 parameter)
-  // handle: thin, neck: taper, bowl: wide concave ellipsoid
-  function getRadius(t: number): number {
-    if (t < 0.45) {
-      // Handle: thin cylinder
-      return 0.06;
-    } else if (t < 0.6) {
-      // Neck: taper from handle to bowl
-      const nt = (t - 0.45) / 0.15;
-      return lerp(0.06, 0.28, smoothstep(0, 1, nt));
+  // Returns the cross-section shape at a given normalized t (0=bottom, 1=top)
+  // Each point is [x, z] offset from the spine center
+  function getCrossSection(
+    t: number,
+    ringPts: number
+  ): { x: number; z: number }[] {
+    const pts: { x: number; z: number }[] = [];
+
+    // Determine width and depth of cross-section based on t
+    let halfW: number; // half-width in X
+    let halfD: number; // half-depth in Z
+    let flatness: number; // 0 = circular, 1 = very flat (rectangular-ish)
+
+    if (t < 0.35) {
+      // Handle: flat rectangle with rounded corners
+      // Slight taper: wider at top of handle
+      const ht = t / 0.35;
+      halfW = lerp(0.045, 0.055, ht);
+      halfD = lerp(0.018, 0.022, ht);
+      flatness = 0.75; // quite flat
+    } else if (t < 0.5) {
+      // Neck: transitions from flat handle to round-ish bowl base
+      const nt = (t - 0.35) / 0.15;
+      const s = smoothstep(0, 1, nt);
+      halfW = lerp(0.055, 0.18, s);
+      halfD = lerp(0.022, 0.12, s);
+      flatness = lerp(0.75, 0.1, s);
     } else if (t < 0.95) {
-      // Bowl: ellipsoidal bulge
-      const bt = (t - 0.6) / 0.35;
-      // Parabolic bowl shape
-      const bowlRadius = 0.28 + 0.12 * Math.sin(bt * Math.PI);
-      return bowlRadius;
+      // Bowl: wide oval
+      const bt = (t - 0.5) / 0.45;
+      // Bowl profile: widens then narrows
+      const bowlShape = Math.sin(bt * Math.PI);
+      const bowlWiden = Math.sin(bt * Math.PI * 0.85); // asymmetric — wider in middle
+      halfW = 0.18 + bowlWiden * 0.14;
+      halfD = 0.12 + bowlShape * 0.10;
+      flatness = 0.0; // smooth oval
     } else {
-      // Tip: close off
-      const tt = (t - 0.95) / 0.05;
-      return lerp(0.28, 0.05, tt);
+      // Bowl rim taper
+      const rt = (t - 0.95) / 0.05;
+      const s = smoothstep(0, 1, rt);
+      halfW = lerp(0.20, 0.08, s);
+      halfD = lerp(0.13, 0.04, s);
+      flatness = 0.0;
     }
-  }
 
-  // Build tube-like geometry by sampling spine and creating rings
-  const segments = 64;
-  const radialSegments = 16;
-  const vertices: number[] = [];
-  const indices: number[] = [];
+    for (let i = 0; i < ringPts; i++) {
+      const angle = (i / ringPts) * Math.PI * 2;
+      let cosA = Math.cos(angle);
+      let sinA = Math.sin(angle);
 
-  for (let i = 0; i <= segments; i++) {
-    const t = i / segments;
-    const point = spine.getPointAt(t);
-    const tangent = spine.getTangentAt(t).normalize();
-
-    // Build a coordinate frame
-    const up = Math.abs(tangent.y) > 0.99
-      ? new THREE.Vector3(1, 0, 0)
-      : new THREE.Vector3(0, 1, 0);
-    const binormal = new THREE.Vector3().crossVectors(tangent, up).normalize();
-    const normal = new THREE.Vector3().crossVectors(binormal, tangent).normalize();
-
-    const radius = getRadius(t);
-
-    // For the bowl section, make it concave (flatten the front)
-    for (let j = 0; j <= radialSegments; j++) {
-      const angle = (j / radialSegments) * Math.PI * 2;
-      let rx = radius;
-      let rz = radius;
-
-      // Bowl concavity: flatten the front face (positive Z side)
-      if (t > 0.6 && t < 0.95) {
-        const bt = (t - 0.6) / 0.35;
-        const concavity = Math.sin(bt * Math.PI) * 0.4;
-        const cosA = Math.cos(angle);
-        if (cosA > 0) {
-          // Push front inward for concave bowl
-          rz *= (1 - concavity * cosA * cosA);
-        }
+      // Apply superellipse for flatness (handle)
+      // p > 2 means more rectangular
+      if (flatness > 0) {
+        const p = lerp(2, 4, flatness);
+        const absCos = Math.abs(cosA);
+        const absSin = Math.abs(sinA);
+        const r =
+          1.0 /
+          Math.pow(
+            Math.pow(absCos, p) + Math.pow(absSin, p),
+            1.0 / p
+          );
+        cosA *= r;
+        sinA *= r;
       }
 
-      const x = point.x + (Math.cos(angle) * rx * normal.x + Math.sin(angle) * rz * binormal.x);
-      const y = point.y + (Math.cos(angle) * rx * normal.y + Math.sin(angle) * rz * binormal.y);
-      const z = point.z + (Math.cos(angle) * rx * normal.z + Math.sin(angle) * rz * binormal.z);
+      pts.push({
+        x: cosA * halfW,
+        z: sinA * halfD,
+      });
+    }
 
-      vertices.push(x, y, z);
+    return pts;
+  }
+
+  // ── Build outer surface ──────────────────────────────────────────────
+  const outerVerts: number[] = [];
+  const outerIndices: number[] = [];
+
+  for (let i = 0; i <= SLICES; i++) {
+    const t = i / SLICES;
+    const y = lerp(yMin, yMax, t);
+    const cs = getCrossSection(t, RING_PTS);
+
+    for (let j = 0; j < RING_PTS; j++) {
+      outerVerts.push(cs[j].x, y, cs[j].z);
     }
   }
 
-  // Build faces
-  for (let i = 0; i < segments; i++) {
-    for (let j = 0; j < radialSegments; j++) {
-      const a = i * (radialSegments + 1) + j;
-      const b = a + 1;
-      const c = (i + 1) * (radialSegments + 1) + j;
-      const d = c + 1;
+  // Triangulate outer surface
+  for (let i = 0; i < SLICES; i++) {
+    for (let j = 0; j < RING_PTS; j++) {
+      const j1 = (j + 1) % RING_PTS;
+      const a = i * RING_PTS + j;
+      const b = i * RING_PTS + j1;
+      const c = (i + 1) * RING_PTS + j;
+      const d = (i + 1) * RING_PTS + j1;
 
-      indices.push(a, c, b);
-      indices.push(b, c, d);
+      outerIndices.push(a, c, b);
+      outerIndices.push(b, c, d);
     }
   }
+
+  // Cap the bottom of the handle (close it off)
+  const handleCapCenter = outerVerts.length / 3;
+  outerVerts.push(0, yMin, 0); // center vertex
+  for (let j = 0; j < RING_PTS; j++) {
+    const j1 = (j + 1) % RING_PTS;
+    outerIndices.push(handleCapCenter, j1, j);
+  }
+
+  // ── Build inner bowl surface (concave) ───────────────────────────────
+  // The inner surface only exists in the bowl region (t > 0.5)
+  // It is offset inward and creates the concavity
+  const BOWL_START_SLICE = Math.floor(SLICES * 0.5);
+  const BOWL_SLICES = SLICES - BOWL_START_SLICE;
+  const WALL_THICKNESS = 0.018; // thickness of spoon bowl wall
+
+  const innerOffset = outerVerts.length / 3; // vertex index offset
+  const innerVerts: number[] = [];
+  const innerIndices: number[] = [];
+
+  for (let i = 0; i <= BOWL_SLICES; i++) {
+    const sliceIdx = BOWL_START_SLICE + i;
+    const t = sliceIdx / SLICES;
+    const y = lerp(yMin, yMax, t);
+    const cs = getCrossSection(t, RING_PTS);
+
+    // Bowl depth profile: deeper in the middle, shallower at edges
+    const bowlT = i / BOWL_SLICES;
+    const depthFactor = Math.sin(bowlT * Math.PI); // 0 at edges, 1 at center
+
+    for (let j = 0; j < RING_PTS; j++) {
+      // Shrink inward for wall thickness
+      const len = Math.sqrt(cs[j].x * cs[j].x + cs[j].z * cs[j].z);
+      let scale = len > 0.001 ? (len - WALL_THICKNESS) / len : 1;
+      if (scale < 0.3) scale = 0.3;
+
+      const ix = cs[j].x * scale;
+      const iz = cs[j].z * scale;
+
+      // Push the inner surface DOWN (negative Y direction) for concavity
+      // The "top" of the bowl is the eating side, so inner surface dips down
+      const concaveDepth = depthFactor * 0.10;
+      const iy = y - concaveDepth;
+
+      innerVerts.push(ix, iy, iz);
+    }
+  }
+
+  // Triangulate inner surface (reversed winding for correct normals facing up/inward)
+  for (let i = 0; i < BOWL_SLICES; i++) {
+    for (let j = 0; j < RING_PTS; j++) {
+      const j1 = (j + 1) % RING_PTS;
+      const a = innerOffset + i * RING_PTS + j;
+      const b = innerOffset + i * RING_PTS + j1;
+      const c = innerOffset + (i + 1) * RING_PTS + j;
+      const d = innerOffset + (i + 1) * RING_PTS + j1;
+
+      // Reverse winding so normals face inward/upward
+      innerIndices.push(a, b, c);
+      innerIndices.push(b, d, c);
+    }
+  }
+
+  // ── Connect inner and outer bowl rim ─────────────────────────────────
+  // At the bowl opening (t = 0.5, the first bowl slice), connect inner and outer
+  const rimIndices: number[] = [];
+  const outerRimStart = BOWL_START_SLICE * RING_PTS;
+  const innerRimStart = innerOffset;
+
+  for (let j = 0; j < RING_PTS; j++) {
+    const j1 = (j + 1) % RING_PTS;
+    const oa = outerRimStart + j;
+    const ob = outerRimStart + j1;
+    const ia = innerRimStart + j;
+    const ib = innerRimStart + j1;
+
+    rimIndices.push(oa, ia, ob);
+    rimIndices.push(ob, ia, ib);
+  }
+
+  // Also connect at the tip (top of bowl)
+  const outerTipStart = SLICES * RING_PTS;
+  const innerTipStart = innerOffset + BOWL_SLICES * RING_PTS;
+
+  for (let j = 0; j < RING_PTS; j++) {
+    const j1 = (j + 1) % RING_PTS;
+    const oa = outerTipStart + j;
+    const ob = outerTipStart + j1;
+    const ia = innerTipStart + j;
+    const ib = innerTipStart + j1;
+
+    rimIndices.push(oa, ob, ia);
+    rimIndices.push(ob, ib, ia);
+  }
+
+  // Cap the inner bowl at the tip (top)
+  const innerTipCapCenter = (outerVerts.length + innerVerts.length) / 3;
+  // We need to add this center vertex
+  const tipY = lerp(yMin, yMax, 1.0);
+  const tipCapVerts = [0, tipY - 0.05, 0]; // slightly depressed center
+
+  const tipCapIndices: number[] = [];
+  for (let j = 0; j < RING_PTS; j++) {
+    const j1 = (j + 1) % RING_PTS;
+    tipCapIndices.push(innerTipCapCenter, innerTipStart + j, innerTipStart + j1);
+  }
+
+  // ── Assemble final geometry ──────────────────────────────────────────
+  const allVerts = new Float32Array([
+    ...outerVerts,
+    ...innerVerts,
+    ...tipCapVerts,
+  ]);
+  const allIndices = [
+    ...outerIndices,
+    ...innerIndices,
+    ...rimIndices,
+    ...tipCapIndices,
+  ];
 
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
-  geometry.setIndex(indices);
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(allVerts, 3));
+  geometry.setIndex(allIndices);
   geometry.computeVertexNormals();
 
   return geometry;
@@ -158,16 +289,18 @@ function BendingSpoon() {
   const solidGeo = useMemo(() => geometry.clone(), [geometry]);
   const glowGeo = useMemo(() => {
     const g = geometry.clone();
-    // Scale up slightly for glow shell
+    // Scale outward slightly for glow shell
     const pos = g.getAttribute("position") as THREE.BufferAttribute;
     const arr = pos.array as Float32Array;
     for (let i = 0; i < arr.length; i += 3) {
-      const len = Math.sqrt(arr[i] ** 2 + arr[i + 1] ** 2 + arr[i + 2] ** 2);
-      if (len > 0) {
-        const scale = 1.08;
-        // Only scale the radial component, not the Y position
-        arr[i] *= scale;
-        arr[i + 2] *= scale;
+      // Compute radial direction from spine (X, Z only)
+      const rx = arr[i];
+      const rz = arr[i + 2];
+      const rLen = Math.sqrt(rx * rx + rz * rz);
+      if (rLen > 0.005) {
+        const expand = 1.06;
+        arr[i] *= expand;
+        arr[i + 2] *= expand;
       }
     }
     pos.needsUpdate = true;
@@ -197,8 +330,8 @@ function BendingSpoon() {
         let oy = srcArr[i3 + 1];
         let oz = srcArr[i3 + 2];
 
-        // Normalize height to 0..1 range (handle at -1.5, bowl at 1.55)
-        const heightNorm = (oy + 1.5) / 3.05;
+        // Normalize height to 0..1 range (handle at -1.5, bowl at 1.0)
+        const heightNorm = (oy + 1.5) / 2.5;
 
         // ── Phase 0 (0-3s): Gentle float/wobble ──
         const p0Strength = smoothstep(0, 0.5, cycleTime) * (1 - smoothstep(2.5, 3.5, cycleTime));
@@ -214,13 +347,10 @@ function BendingSpoon() {
         // ── Phase 1 (3-6s): Dramatic bend ──
         const p1Strength = smoothstep(2.5, 3.5, cycleTime) * (1 - smoothstep(5.5, 6.5, cycleTime));
         if (p1Strength > 0) {
-          // Bend proportional to height — top bends more
           const bendAmount = heightNorm * heightNorm * 0.6;
-          const bendDir = Math.sin(time * 0.8) * 0.3 + 0.7; // mostly one direction
+          const bendDir = Math.sin(time * 0.8) * 0.3 + 0.7;
           ox += bendAmount * bendDir * p1Strength;
-          // Add some compression on the inner side
           oz += Math.sin(heightNorm * Math.PI) * 0.1 * p1Strength * Math.cos(time * 1.2);
-          // Slight Y compression at the bend point
           oy -= Math.sin(heightNorm * Math.PI) * 0.08 * p1Strength;
         }
 
@@ -234,7 +364,6 @@ function BendingSpoon() {
           const rz = oz;
           ox = rx * cosT - rz * sinT;
           oz = rx * sinT + rz * cosT;
-          // Add some radial pulsing
           const pulse = Math.sin(heightNorm * Math.PI * 2 + time * 3) * 0.03 * p2Strength;
           ox += ox * pulse;
           oz += oz * pulse;
@@ -244,7 +373,6 @@ function BendingSpoon() {
         const p3Strength = smoothstep(8.5, 9.5, cycleTime) * (1 - smoothstep(11.5, 12.0, cycleTime));
         if (p3Strength > 0) {
           const reformTime = cycleTime - 9.0;
-          // Decaying oscillation
           const decay = Math.exp(-reformTime * 1.5);
           const oscillation = Math.sin(reformTime * 8.0) * decay;
           ox += heightNorm * 0.15 * oscillation * p3Strength;
@@ -296,7 +424,7 @@ function BendingSpoon() {
           color={GREEN}
           wireframe
           transparent
-          opacity={0.6}
+          opacity={0.7}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
@@ -307,7 +435,7 @@ function BendingSpoon() {
         <meshBasicMaterial
           color={DARK_GREEN}
           transparent
-          opacity={0.35}
+          opacity={0.4}
           depthWrite={false}
           side={THREE.DoubleSide}
         />
@@ -319,7 +447,7 @@ function BendingSpoon() {
           color={GLOW_GREEN}
           wireframe
           transparent
-          opacity={0.08}
+          opacity={0.1}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
@@ -439,10 +567,8 @@ function FloatingCodeChars() {
         y,
         Math.sin(angle) * d.radius * cosP
       );
-      // Face camera (billboard) — handled by lookAt in useFrame
       child.lookAt(state.camera.position);
 
-      // Pulse opacity
       const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
       if (mat) {
         mat.opacity = 0.3 + Math.sin(t * 2 + d.phase) * 0.15;
@@ -495,9 +621,9 @@ function PulsingLights() {
 function AutoCamera() {
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    const radius = 4.0 + Math.sin(t * 0.15) * 0.5; // 3.5 - 4.5
+    const radius = 4.0 + Math.sin(t * 0.15) * 0.5;
     const angle = t * 0.12;
-    const height = Math.sin(t * 0.1) * 0.6; // gentle vertical oscillation
+    const height = Math.sin(t * 0.1) * 0.6;
 
     state.camera.position.set(
       Math.sin(angle) * radius,
