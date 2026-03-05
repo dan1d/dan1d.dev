@@ -53,11 +53,13 @@ export function CinematicCamera({ onIntroComplete, chromaticOffset }: CinematicC
       caX = fade;
       caY = fade;
     } else {
-      // Background drift
+      // Background drift — slow perspective shifts
       const dt = t - 7.5;
       z = -19 + Math.sin(dt * 0.12) * 0.3;
-      x = Math.sin(dt * 0.2) * 0.08;
-      y = Math.cos(dt * 0.17) * 0.05;
+      // Side-to-side sway (layered frequencies for organic feel)
+      x = Math.sin(dt * 0.08) * 0.6 + Math.sin(dt * 0.23) * 0.2;
+      // Vertical bob
+      y = Math.cos(dt * 0.06) * 0.3 + Math.sin(dt * 0.19) * 0.1;
 
       // Random earthquake tremors
       const q = quakeRef.current;
