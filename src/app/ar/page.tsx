@@ -108,7 +108,7 @@ function ARPageContent() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/10 bg-black/80 backdrop-blur-md">
+      <header className="relative z-50 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/10 bg-black/80 backdrop-blur-md">
         <a
           href="/"
           className="text-sm font-medium text-white/60 hover:text-white transition-colors flex items-center gap-2"
@@ -150,7 +150,7 @@ function ARPageContent() {
       </header>
 
       {/* Mode tab bar */}
-      <div className="flex items-center gap-1 px-4 sm:px-6 py-3 border-b border-white/10 bg-black/60 backdrop-blur-sm">
+      <div className="relative z-50 flex items-center gap-1 px-4 sm:px-6 py-3 border-b border-white/10 bg-black/60 backdrop-blur-sm">
         {(
           [
             { key: "models", label: "3D Models" },
