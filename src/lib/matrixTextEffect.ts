@@ -76,7 +76,8 @@ export function updateReveal(
   mask: Uint8Array,
   sweepProgress: number,
   dt: number,
-  fadeInMs: number = 120
+  fadeInMs: number = 120,
+  charMap?: string[]
 ): void {
   const eased = smoothstep(sweepProgress);
   const fadeStep = dt / (fadeInMs / 1000);
@@ -86,14 +87,12 @@ export function updateReveal(
 
     if (thresholds[i] <= eased) {
       if (cells[i] === null) {
-        // Lock this cell — start with fadeIn = 0
-        cells[i] = { char: randomMatrixChar(), fadeIn: 0, fadeOut: 0 };
+        // Use the actual text character if available, otherwise random
+        const char = charMap?.[i] || randomMatrixChar();
+        cells[i] = { char, fadeIn: 0, fadeOut: 0 };
       }
       const cell = cells[i]!;
       cell.fadeIn = Math.min(1, cell.fadeIn + fadeStep);
-
-      // Occasional character flicker
-      if (Math.random() < 0.025) cell.char = randomMatrixChar();
     }
   }
 }

@@ -100,6 +100,8 @@ export function drawRainChar({
 
 export interface TextGridMask {
   mask: Uint8Array;
+  /** Per-cell character from the original text (empty string if not a text cell) */
+  charMap: string[];
   cols: number;
   rows: number;
 }
@@ -130,21 +132,37 @@ export function buildTextGrid(
   c.fillStyle = "#fff";
   c.fillText(text, canvasW / 2, canvasH / 2);
 
+  // Measure each character's x-position to build a charMap
+  const charPositions: { char: string; left: number; right: number }[] = [];
+  const textStartX = canvasW / 2 - c.measureText(text).width / 2;
+  let xCursor = textStartX;
+  for (const ch of text) {
+    const charW = c.measureText(ch).width;
+    charPositions.push({ char: ch, left: xCursor, right: xCursor + charW });
+    xCursor += charW;
+  }
+
   const img = c.getImageData(0, 0, canvasW, canvasH);
   const cols = Math.floor(canvasW / cellW);
   const rows = Math.floor(canvasH / cellH);
   const mask = new Uint8Array(cols * rows);
+  const charMap: string[] = new Array(cols * rows).fill("");
 
   for (let r = 0; r < rows; r++) {
     for (let col = 0; col < cols; col++) {
       const px = Math.floor(col * cellW + cellW / 2);
       const py = Math.floor(r * cellH + cellH / 2);
       const idx = (py * canvasW + px) * 4;
-      if (img.data[idx + 3] > 80) mask[r * cols + col] = 1;
+      if (img.data[idx + 3] > 80) {
+        mask[r * cols + col] = 1;
+        // Find which character this pixel belongs to
+        const hit = charPositions.find(cp => px >= cp.left && px < cp.right);
+        charMap[r * cols + col] = hit ? hit.char.toUpperCase() : randomMatrixChar();
+      }
     }
   }
 
-  return { mask, cols, rows };
+  return { mask, charMap, cols, rows };
 }
 
 // ─── Easing ─────────────────────────────────────────────────────────────────

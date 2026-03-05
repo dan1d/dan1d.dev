@@ -2,12 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import {
+  MATRIX_CHARS,
   randomMatrixChar,
-  buildFontSizes,
-  drawRainChar,
   buildTextGrid,
-  createRainColumns,
-  type RainColumn,
 } from "@/lib/matrix";
 import {
   computeThresholds,
@@ -38,16 +35,27 @@ export interface MatrixTextRevealProps {
   charFadeOutMs?: number;
 }
 
-// ─── Background drop ────────────────────────────────────────────────────────
+// ─── Per-column rain state (mirrors corridor shader logic) ──────────────────
 
-interface BgDrop {
-  x: number;
-  y: number;
+interface RainCol {
+  head: number;
   speed: number;
-  fontSize: number;
+  trailLen: number;
+  phase: number;
 }
 
-const BG_FONT_SIZES = [8, 10, 12, 14, 18, 22, 26, 30];
+// ─── Deterministic hash matching corridor shader ────────────────────────────
+
+function hash(x: number, y: number): number {
+  return ((Math.sin(x * 127.1 + y * 311.7) * 43758.5453) % 1 + 1) % 1;
+}
+
+// ─── Font sizes per cell — varied like corridor GlyphAtlas ──────────────────
+// Corridor atlas uses [36,42,48,52,56,60,64,72] in 64px cells → ratio 0.56–1.12
+// We use similar ratios relative to our rain cell size
+
+// Wide range: tiny to large, matching corridor wall multi-size feel
+const FONT_RATIOS = [0.4, 0.5, 0.5, 0.6, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.4, 2.8];
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
@@ -65,7 +73,6 @@ export default function MatrixTextReveal({
 }: MatrixTextRevealProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Stable refs so the animation loop always reads fresh values
   const propsRef = useRef({ phase, progress, rainIntensity, rainSpeedMultiplier });
   propsRef.current = { phase, progress, rainIntensity, rainSpeedMultiplier };
 
@@ -77,61 +84,69 @@ export default function MatrixTextReveal({
     let animId: number;
     let w = 0;
     let h = 0;
-    const CELL = cellSize;
+    // Rain grid uses smaller cells for higher density
+    const RAIN_CELL = 10;
+    // Text grid uses the provided cellSize for proper letter formation
+    const TEXT_CELL = cellSize;
 
-    // State
-    let columns: (RainColumn & { fontSize: number })[] = [];
-    let bgDrops: BgDrop[] = [];
+    // Rain state
+    let rainCols: RainCol[] = [];
+    let rainGridCols = 0;
+    let rainGridRows = 0;
+    let cellChars: Uint16Array = new Uint16Array(0);
+    let cellFontSizes: Uint8Array = new Uint8Array(0);
+
+    // Text state
     let textMask: Uint8Array | null = null;
-    let gridCols = 0;
-    let gridRows = 0;
+    let textCharMap: string[] = [];
+    let textGridCols = 0;
+    let textGridRows = 0;
     let revealThresholds: Float32Array | null = null;
-    let cells: (LockedCell | null)[] = [];
-    let lastTime = performance.now();
+    let lockedCells: (LockedCell | null)[] = [];
 
-    const fontSizes = buildFontSizes(CELL);
+    let lastTime = performance.now();
+    let elapsed = 0;
 
     function resize() {
       w = canvas!.width = window.innerWidth;
       h = canvas!.height = window.innerHeight;
-      gridCols = Math.floor(w / CELL);
-      gridRows = Math.floor(h / CELL);
 
-      // Primary rain columns
-      const baseColumns = createRainColumns(gridCols, h, CELL);
-      const newCols: (RainColumn & { fontSize: number })[] = [];
-      for (let i = 0; i < gridCols; i++) {
-        newCols.push(
-          columns[i] ?? {
-            ...baseColumns[i],
-            fontSize: fontSizes[Math.floor(Math.random() * fontSizes.length)],
-          }
-        );
+      // Rain grid (dense, small cells)
+      rainGridCols = Math.floor(w / RAIN_CELL);
+      rainGridRows = Math.floor(h / RAIN_CELL);
+
+      const newCols: RainCol[] = [];
+      for (let c = 0; c < rainGridCols; c++) {
+        newCols.push(rainCols[c] ?? {
+          head: 0,
+          speed: (0.3 + hash(c, 0) * 1.4) * 12,
+          trailLen: 8 + hash(c, 13.7) * 18,
+          phase: hash(c, 7.3) * 80,
+        });
       }
-      columns = newCols;
+      rainCols = newCols;
 
-      // Background drops — extra density
-      const bgCount = Math.floor(w / 8);
-      if (bgDrops.length !== bgCount) {
-        bgDrops = [];
-        for (let i = 0; i < bgCount; i++) {
-          bgDrops.push({
-            x: Math.random() * w,
-            y: Math.random() * h * -1,
-            speed: 0.8 + Math.random() * 4.0,
-            fontSize: BG_FONT_SIZES[Math.floor(Math.random() * BG_FONT_SIZES.length)],
-          });
-        }
+      const totalCells = rainGridCols * rainGridRows;
+      cellChars = new Uint16Array(totalCells);
+      cellFontSizes = new Uint8Array(totalCells);
+      // Seed-based RNG for consistent sizes
+      let seed = 42;
+      const rng = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+      for (let i = 0; i < totalCells; i++) {
+        cellChars[i] = Math.floor(Math.random() * MATRIX_CHARS.length);
+        const ratio = FONT_RATIOS[Math.floor(rng() * FONT_RATIOS.length)];
+        cellFontSizes[i] = Math.round(RAIN_CELL * ratio);
       }
 
-      // Text mask & thresholds
-      const result = buildTextGrid(text, w, h, CELL, CELL);
+      // Text grid (larger cells for letter formation)
+      const result = buildTextGrid(text, w, h, TEXT_CELL, TEXT_CELL);
       textMask = result.mask;
-      gridCols = result.cols;
-      gridRows = result.rows;
+      textCharMap = result.charMap;
+      textGridCols = result.cols;
+      textGridRows = result.rows;
 
-      revealThresholds = computeThresholds(textMask, gridCols, gridRows, revealDirection);
-      cells = createCellGrid(gridCols, gridRows);
+      revealThresholds = computeThresholds(textMask, textGridCols, textGridRows, revealDirection);
+      lockedCells = createCellGrid(textGridCols, textGridRows);
     }
 
     resize();
@@ -139,109 +154,128 @@ export default function MatrixTextReveal({
 
     function draw() {
       const now = performance.now();
-      const dt = Math.min((now - lastTime) / 1000, 0.05); // cap at 50ms
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
       const { phase: ph, progress: p, rainIntensity: inten, rainSpeedMultiplier: speedMult } =
         propsRef.current;
 
+      elapsed += dt * speedMult;
+
       // ── Update locked cells ───────────────────────────────────────────
       if (textMask && revealThresholds) {
         if (ph === "revealing") {
-          updateReveal(cells, revealThresholds, textMask, p, dt, charFadeInMs);
+          updateReveal(lockedCells, revealThresholds, textMask, p, dt, charFadeInMs, textCharMap);
         } else if (ph === "holding") {
-          // Keep all cells fully visible — just advance fadeIn for any stragglers
-          updateReveal(cells, revealThresholds, textMask, 1, dt, charFadeInMs);
+          updateReveal(lockedCells, revealThresholds, textMask, 1, dt, charFadeInMs, textCharMap);
         } else if (ph === "dissolving") {
-          updateDissolve(cells, revealThresholds, p, dt, charFadeOutMs);
+          updateDissolve(lockedCells, revealThresholds, p, dt, charFadeOutMs);
         } else if (ph === "done") {
-          // Clear all
-          for (let i = 0; i < cells.length; i++) cells[i] = null;
+          for (let i = 0; i < lockedCells.length; i++) lockedCells[i] = null;
         }
       }
 
-      // ── Fade trails ───────────────────────────────────────────────────
-      const fadeAlpha = 0.08 + (1 - inten) * 0.06;
-      ctx.fillStyle = `rgba(0, 0, 0, ${fadeAlpha})`;
+      // ── Clear frame ───────────────────────────────────────────────────
+      ctx.fillStyle = "#000000";
       ctx.fillRect(0, 0, w, h);
 
-      // ── Background rain drops ─────────────────────────────────────────
-      for (let i = 0; i < bgDrops.length; i++) {
-        const drop = bgDrops[i];
-        drop.y += drop.speed * (0.5 + inten * 0.8) * speedMult;
-
-        if (drop.y > h + 50) {
-          drop.y = Math.random() * -100;
-          drop.x = Math.random() * w;
-          drop.speed = 0.8 + Math.random() * 4.0;
-          drop.fontSize = BG_FONT_SIZES[Math.floor(Math.random() * BG_FONT_SIZES.length)];
-        }
-
-        if (drop.y > 0) {
-          drawRainChar({
-            ctx,
-            char: randomMatrixChar(),
-            x: drop.x,
-            y: drop.y,
-            fontSize: drop.fontSize,
-            intensity: inten * (drop.fontSize < 14 ? 0.5 : 0.8),
-          });
+      // ── Buzz characters ───────────────────────────────────────────────
+      for (let i = 0; i < cellChars.length; i++) {
+        const cellHash = hash(i % rainGridCols, Math.floor(i / rainGridCols) * 3.17);
+        const buzzRate = 4 + cellHash * 4;
+        if (Math.floor(elapsed * buzzRate) !== Math.floor((elapsed - dt * speedMult) * buzzRate)) {
+          cellChars[i] = Math.floor(Math.random() * MATRIX_CHARS.length);
         }
       }
 
-      // ── Primary rain columns ──────────────────────────────────────────
-      for (let i = 0; i < columns.length; i++) {
-        const col = columns[i];
-        const x = i * CELL;
+      // ── Update rain heads ─────────────────────────────────────────────
+      for (let c = 0; c < rainCols.length; c++) {
+        const col = rainCols[c];
+        col.head += col.speed * speedMult * dt;
+        const wrapLen = rainGridRows + col.trailLen + 5;
+        if (col.head > wrapLen) col.head -= wrapLen;
+      }
 
-        col.y += col.speed * (0.4 + inten * 0.8) * speedMult;
+      // ── Build locked cell lookup for fast skip ────────────────────────
+      // Map from rain grid coords → whether a locked text cell covers it
+      // (text cells are larger, so one text cell covers multiple rain cells)
 
-        if (col.y * CELL > h + 200) {
-          col.y = Math.random() * -15;
-          col.speed = 0.3 + Math.random() * 2.5;
-          col.fontSize = fontSizes[Math.floor(Math.random() * fontSizes.length)];
-        }
+      // ── Draw rain grid ────────────────────────────────────────────────
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
 
-        // Skip rain head near locked cells
-        const headRow = Math.floor(col.y);
-        let skipRain = false;
-        if (ph === "revealing" || ph === "holding" || ph === "dissolving") {
-          for (let r = Math.max(0, headRow - 2); r <= Math.min(gridRows - 1, headRow + 2); r++) {
-            if (cells[r * gridCols + i] !== null) {
-              skipRain = true;
-              break;
-            }
+      for (let c = 0; c < rainGridCols; c++) {
+        const col = rainCols[c];
+        const x = c * RAIN_CELL + RAIN_CELL / 2;
+
+        for (let r = 0; r < rainGridRows; r++) {
+          const idx = r * rainGridCols + c;
+          const cy = r * RAIN_CELL + RAIN_CELL / 2;
+
+          // Check if a locked text cell covers this rain cell
+          const textC = Math.floor((c * RAIN_CELL) / TEXT_CELL);
+          const textR = Math.floor((r * RAIN_CELL) / TEXT_CELL);
+          if (textC < textGridCols && textR < textGridRows) {
+            const textIdx = textR * textGridCols + textC;
+            if (lockedCells[textIdx] !== null) continue;
           }
-        }
 
-        const headY = col.y * CELL;
-        if (!skipRain && headY > 0 && headY < h) {
-          drawRainChar({
-            ctx,
-            char: randomMatrixChar(),
-            x,
-            y: headY,
-            fontSize: col.fontSize,
-            intensity: inten * 0.6,
-          });
+          // Rain brightness (corridor shader logic)
+          const headPos = col.head + col.phase % rainGridRows;
+          const d = ((headPos - r) % (rainGridRows + col.trailLen + 5) + rainGridRows + col.trailLen + 5) % (rainGridRows + col.trailLen + 5);
+
+          let brightness: number;
+          let isHead = false;
+
+          if (d >= 0 && d < 1.5) {
+            brightness = 1.0;
+            isHead = true;
+          } else if (d >= 1.5 && d < col.trailLen) {
+            const t = (d - 1.5) / (col.trailLen - 1.5);
+            brightness = (1 - t) * (1 - t) * 0.85 + 0.15;
+          } else {
+            brightness = 0.15;
+          }
+
+          const charVariation = 0.7 + hash(c, r * 3.17) * 0.6;
+          brightness *= charVariation * inten;
+
+          if (brightness < 0.01) continue;
+
+          const fontSize = cellFontSizes[idx];
+          const char = MATRIX_CHARS[cellChars[idx]];
+
+          ctx.font = `bold ${fontSize}px monospace`;
+          if (isHead && brightness > 0.5) {
+            const wb = Math.floor(180 + 75 * brightness);
+            ctx.fillStyle = `rgb(${wb}, ${wb}, ${wb})`;
+          } else {
+            const g = Math.floor(60 + brightness * 195);
+            ctx.fillStyle = `rgb(0, ${g}, ${Math.floor(g * 0.15)})`;
+          }
+          ctx.globalAlpha = Math.min(1, brightness * 1.3);
+          ctx.fillText(char, x, cy);
+          ctx.globalAlpha = 1;
         }
       }
 
-      // ── Locked text cells ─────────────────────────────────────────────
-      for (let i = 0; i < cells.length; i++) {
-        const cell = cells[i];
+      // ── Draw locked text cells (on top of rain) ───────────────────────
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      for (let i = 0; i < lockedCells.length; i++) {
+        const cell = lockedCells[i];
         if (cell === null) continue;
 
-        const c = i % gridCols;
-        const r = Math.floor(i / gridCols);
-        const x = c * CELL;
-        const cy = r * CELL + CELL;
+        const c = i % textGridCols;
+        const r = Math.floor(i / textGridCols);
+        const x = c * TEXT_CELL;
+        const cy = r * TEXT_CELL;
 
         const alpha = cellOpacity(cell);
         if (alpha <= 0) continue;
 
-        ctx.globalAlpha = alpha;
-        ctx.font = `bold ${CELL + 4}px monospace`;
+        ctx.globalAlpha = alpha * inten;
+        ctx.font = `bold ${TEXT_CELL + 2}px monospace`;
         ctx.fillStyle = "#00ff41";
         ctx.fillText(cell.char, x, cy);
         ctx.globalAlpha = 1;
@@ -256,7 +290,6 @@ export default function MatrixTextReveal({
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", resize);
     };
-    // Only re-mount on text or direction changes (not on phase/progress which use refs)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text, revealDirection, dissolveDirection, cellSize, charFadeInMs, charFadeOutMs]);
 

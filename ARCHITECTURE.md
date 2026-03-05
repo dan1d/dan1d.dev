@@ -13,7 +13,7 @@ A cinematic Matrix-themed portfolio built with Next.js 16, React 19, Three.js (W
 | **Styling** | Tailwind CSS 4 | Utility-first CSS |
 | **3D Engine** | Three.js 0.183 + R3F 9 | WebGL/WebGPU rendering |
 | **3D Utilities** | @react-three/drei 10 | Camera controls, helpers |
-| **Post-Processing** | @react-three/postprocessing | Bloom, glow effects |
+| **Post-Processing** | @react-three/postprocessing 3 | Bloom, vignette, chromatic aberration |
 | **Animation** | GSAP 3.14 | Scroll-triggered animations |
 | **AR** | @google/model-viewer | WebXR AR experiences |
 | **Testing** | Vitest + Testing Library | Unit & component tests |
@@ -46,12 +46,22 @@ src/
 │   │   ├── SkylineScene.tsx      # 3D GitHub contribution bars + floating quotes
 │   │   ├── HeroScene.tsx         # Crystal prism scene (legacy, unused)
 │   │   ├── CardScene.tsx         # Floating particles for card page
-│   │   └── ARPreviewScene.tsx    # Crystal with transmission material
+│   │   ├── ARPreviewScene.tsx    # Crystal with transmission material
+│   │   └── corridor/             # Corridor sub-components
+│   │       ├── index.ts          # Barrel exports
+│   │       ├── GlyphAtlas.ts     # 16×16 glyph texture atlas (Latin + symbols)
+│   │       ├── RainSurface.tsx   # Instanced rain on corridor surfaces
+│   │       ├── CinematicCamera.tsx # Camera path + earthquake tremors
+│   │       ├── CorridorStructure.tsx # Doors, panels, architectural details
+│   │       ├── CoderDesk.tsx     # Figure coding at desk (corridor end)
+│   │       ├── AgentFigure.tsx   # Walking Agent Smith silhouettes
+│   │       └── RainPanel.tsx     # Rain-textured panel segments
 │   │
 │   ├── ui/                       # Shared UI components
 │   │   ├── GlobalMatrixRain.tsx  # Full-page canvas rain overlay (z-[1])
+│   │   ├── MatrixTextReveal.tsx  # Reusable text-from-rain canvas component
 │   │   ├── Navbar.tsx            # Fixed navigation (z-50)
-│   │   ├── PageLoader.tsx        # Matrix-style loading screen (z-[9999])
+│   │   ├── PageLoader.tsx        # Matrix loading screen orchestrator (z-[9999])
 │   │   ├── ProjectCard.tsx       # Featured project card
 │   │   ├── Instructions.tsx      # First-visit instructions modal
 │   │   └── ScrollReveal.tsx      # GSAP scroll-triggered reveal wrapper
@@ -64,7 +74,9 @@ src/
 │   └── matrixFigures.ts          # Sprite data: 3 characters × 8 poses (36×48)
 │
 └── lib/
-    └── github.ts                 # GitHub GraphQL API client
+    ├── github.ts                 # GitHub GraphQL API client
+    ├── matrix.ts                 # Shared rain utilities (chars, drawRainChar, buildTextGrid)
+    └── matrixTextEffect.ts       # Pure-logic text formation/dissolution engine
 ```
 
 ## Rendering Architecture
@@ -90,17 +102,24 @@ The GlobalMatrixRain canvas sits between section backgrounds (below) and section
 │  ├── Scene Graph                    │
 │  │   ├── InstancedMesh (rain chars) │
 │  │   ├── Corridor geometry          │
+│  │   ├── CoderDesk (end of hall)    │
 │  │   ├── Lights                     │
-│  │   └── Camera (animated path)     │
+│  │   └── CinematicCamera            │
+│  │       ├── Intro path (0–7.5s)    │
+│  │       ├── Background drift       │
+│  │       └── Random earthquakes     │
 │  │                                  │
 │  └── Post-Processing Stack          │
 │      ├── Bloom (glow on emissive)   │
-│      └── Vignette (edge darkening)  │
+│      ├── Vignette (edge darkening)  │
+│      └── ChromaticAberration        │
+│          (shared Vector2 offset —   │
+│           mutated by camera, no ref)│
 └─────────────────────────────────────┘
 ```
 
 **Key pattern — Instanced character rendering:**
-1. Build a 16×16 glyph texture atlas (Katakana + Latin + digits)
+1. Build a 16×16 glyph texture atlas (Latin + digits + symbols)
 2. Create `InstancedMesh` with `PlaneGeometry` base
 3. Custom `ShaderMaterial` maps per-instance UV offsets to atlas cells
 4. Per-instance brightness via `InstancedBufferAttribute`
@@ -108,6 +127,29 @@ The GlobalMatrixRain canvas sits between section backgrounds (below) and section
 6. `useFrame` updates positions and brightness each frame
 
 This renders 10,000+ characters in a single draw call.
+
+**R3F + Postprocessing v3 compatibility note:**
+- `wrapEffect` (used by all effect components) calls `JSON.stringify(props)` for memoization
+- In React 19, `ref` is a regular prop — passing `ref` to effects causes circular structure errors (Three.js parent/children cycle)
+- Solution: share mutable Three.js objects (e.g., `Vector2`) directly instead of using refs on effect components
+
+### Matrix Text Reveal System
+
+Reusable system for text-from-rain effects:
+
+```
+matrixTextEffect.ts (pure logic)    MatrixTextReveal.tsx (canvas component)
+├── computeThresholds()        →    ├── Background rain drops (varied sizes)
+│   0.05–0.95 range                 ├── Primary rain columns
+│   deterministic jitter            ├── Locked text cells with fadeIn/fadeOut
+├── updateReveal()                  └── Skip rain near locked cells
+│   fadeIn ramp (120ms)
+├── updateDissolve()            PageLoader.tsx (orchestrator)
+│   fadeOut ramp (80ms)         ├── Phase state machine
+└── cellOpacity()               │   rain_in → revealing → holding →
+    fadeIn × (1 - fadeOut)      │   dissolving → done
+                                └── Maps phases to MatrixTextReveal props
+```
 
 ### GlobalMatrixRain (Canvas 2D Overlay)
 
@@ -119,6 +161,27 @@ A separate full-page `<canvas>` element using Canvas 2D API (not Three.js) for t
 - **Depth layering**: 12% of rain columns are "foreground" (drawn after figures)
 - **Two-layer glow**: Broad ambient + tight core radial gradients per figure
 - **Fade-out exits**: Figures fade over 500ms at viewport edges
+
+## Hero Layout
+
+```
+┌──────────────────────────────────────┐
+│  ┌──┐                          ┌──┐ │  CRT corner brackets
+│  └                                ┘ │
+│                                      │
+│            d a n 1 d                 │  mt-[15vh] — upper area
+│                                      │
+│                                      │
+│     ┌─── coder at desk ───┐         │  Corridor background (visible center)
+│     └─────────────────────┘         │
+│                                      │
+│     Senior Full-Stack Engineer       │  mt-auto + mb-[10vh] — bottom area
+│     Description text...              │
+│     [VIEW_PROJECTS] [ENTER_MATRIX]   │
+│  ┌                                ┐ │
+│  └──┘                          └──┘ │
+└──────────────────────────────────────┘
+```
 
 ## Design System
 
@@ -138,6 +201,7 @@ Every section follows the Matrix HUD aesthetic established in GitHubSkyline:
 | **Buttons** | Bracket style: `[VISIT]`, `[DOWNLOAD_SOURCE]` |
 | **Backgrounds** | `bg-black` — no frosted glass, no backdrop-blur |
 | **Status** | Pulsing green dots, `STATUS: ACTIVE` labels |
+| **Characters** | Latin + symbols only (no katakana/CJK) |
 
 ### Color Palette
 
@@ -154,10 +218,11 @@ Every section follows the Matrix HUD aesthetic established in GitHubSkyline:
 ### Hero (Cinematic Matrix Corridor)
 Full-viewport 3D corridor of falling code. R3F canvas with:
 - Instanced character rain on walls, ceiling, floor
-- Bloom postprocessing for cinematic glow
-- Camera slowly moves through corridor
-- Figure silhouettes visible at corridor end
-- Typing sequence overlaid in HTML
+- Bloom + chromatic aberration postprocessing
+- Cinematic camera intro (0–7.5s): approach → accelerate → glitch → zoom
+- Background drift with random earthquake tremors (8–23s intervals)
+- CoderDesk figure visible at corridor end
+- Hero text split: "dan1d" at top, subtitle/description/buttons at bottom to keep coder visible
 
 ### Projects
 Terminal-style cards in a grid. Each card has:
@@ -203,6 +268,8 @@ projects.ts ──→ Projects.tsx ──→ ProjectCard.tsx
 matrixFigures.ts ──→ GlobalMatrixRain.tsx (walking figure silhouettes)
 
 github.ts ──→ API route ──→ GitHubSkyline.tsx ──→ SkylineScene.tsx
+
+matrixTextEffect.ts ──→ MatrixTextReveal.tsx ──→ PageLoader.tsx
 ```
 
 ## Performance
@@ -213,6 +280,7 @@ github.ts ──→ API route ──→ GitHubSkyline.tsx ──→ SkylineScene
 - **Dynamic import**: Three.js scenes loaded client-side only (`ssr: false`)
 - **Cached density masks**: Figure silhouettes cached per pose, recomputed only on frame change
 - **DPR-aware canvas**: `devicePixelRatio` scaling for sharp rendering
+- **No refs on postprocessing effects**: Avoids circular structure JSON errors
 
 ## Testing
 

@@ -10,7 +10,7 @@ type Phase = "rain_in" | "text_form" | "text_hold" | "rain_close" | "fade_out";
 const PHASE_DURATIONS: Record<Phase, number> = {
   rain_in: 1200,
   text_form: 1800,
-  text_hold: 800,
+  text_hold: 1000,
   rain_close: 800,
   fade_out: 1000,
 };

@@ -11,6 +11,8 @@ export function CinematicCamera({ onIntroComplete, chromaticOffset }: CinematicC
   const { camera } = useThree();
   const doneRef = useRef(false);
   const t0Ref = useRef(-1);
+  // Earthquake state: intensity decays over time, triggered randomly
+  const quakeRef = useRef({ intensity: 0, nextAt: 12 });
 
   useFrame(({ clock }) => {
     if (t0Ref.current < 0) t0Ref.current = clock.elapsedTime;
@@ -58,6 +60,24 @@ export function CinematicCamera({ onIntroComplete, chromaticOffset }: CinematicC
       z = -16 + Math.sin(dt * 0.12) * 0.3;
       x = Math.sin(dt * 0.2) * 0.08;
       y = Math.cos(dt * 0.17) * 0.05;
+
+      // Random earthquake tremors
+      const q = quakeRef.current;
+      if (t >= q.nextAt && q.intensity <= 0) {
+        // Trigger a new quake
+        q.intensity = 0.6 + Math.random() * 0.6; // 0.6–1.2
+        q.nextAt = t + 8 + Math.random() * 15; // next one in 8–23s
+      }
+      if (q.intensity > 0) {
+        const shake = q.intensity;
+        x += (Math.random() - 0.5) * 0.25 * shake;
+        y += (Math.random() - 0.5) * 0.15 * shake;
+        z += (Math.random() - 0.5) * 0.1 * shake;
+        caX = Math.max(0.0006, shake * 0.008 * (Math.random() - 0.3));
+        caY = Math.max(0.0006, shake * 0.008 * (Math.random() - 0.3));
+        q.intensity *= 0.94; // decay ~60 frames to settle
+        if (q.intensity < 0.01) q.intensity = 0;
+      }
     }
 
     camera.position.set(x, y, z);

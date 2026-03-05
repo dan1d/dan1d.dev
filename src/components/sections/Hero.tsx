@@ -178,10 +178,11 @@ export default function Hero() {
       />
 
       {/* Hero content — always in DOM (for tests), animated visible after intro */}
-      <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto">
+      <div className="absolute inset-0 z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto">
+        {/* dan1d — upper area, clear of the coder */}
         <h1
           ref={headingRef}
-          className="text-8xl md:text-[10rem] font-black tracking-tighter leading-none mb-6 opacity-0 font-mono"
+          className="text-8xl md:text-[10rem] font-black tracking-tighter leading-none opacity-0 font-mono mt-[15vh] md:mt-[12vh]"
           style={{
             color: "#00ff41",
             textShadow:
@@ -191,26 +192,28 @@ export default function Hero() {
           {siteConfig.handle}
         </h1>
 
-        <p
-          ref={subtitleRef}
-          className="text-xl md:text-2xl font-mono tracking-wider mb-4 opacity-0"
-          style={{ color: "#39ff14", textShadow: "0 0 8px #39ff14" }}
-        >
-          {siteConfig.title}
-        </p>
+        {/* Subtitle, description, buttons — pushed to bottom 20% */}
+        <div className="mt-auto mb-[10vh] md:mb-[8vh] flex flex-col items-center">
+          <p
+            ref={subtitleRef}
+            className="text-xl md:text-2xl font-mono tracking-wider mb-4 opacity-0"
+            style={{ color: "#39ff14", textShadow: "0 0 8px #39ff14" }}
+          >
+            {siteConfig.title}
+          </p>
 
-        <p
-          ref={descRef}
-          className="text-sm md:text-base font-mono text-green-400/60 max-w-xl leading-relaxed mb-10 opacity-0"
-        >
-          {siteConfig.description}
-        </p>
+          <p
+            ref={descRef}
+            className="text-sm md:text-base font-mono text-green-400/60 max-w-xl leading-relaxed mb-10 opacity-0"
+          >
+            {siteConfig.description}
+          </p>
 
-        {/* CTA buttons */}
-        <div
-          ref={ctaRef}
-          className="flex flex-col sm:flex-row gap-4 opacity-0"
-        >
+          {/* CTA buttons */}
+          <div
+            ref={ctaRef}
+            className="flex flex-col sm:flex-row gap-4 opacity-0"
+          >
           <a
             href="#projects"
             aria-label="View Projects"
@@ -238,6 +241,7 @@ export default function Hero() {
               ]
             </span>
           </a>
+        </div>
         </div>
       </div>
 
