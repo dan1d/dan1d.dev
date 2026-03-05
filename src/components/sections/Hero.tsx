@@ -26,11 +26,11 @@ export default function Hero() {
 
   const handleIntroComplete = useCallback(() => setIntroComplete(true), []);
 
-  // Fade in the corridor after the PageLoader intro finishes
-  // Total PageLoader duration: rain_in(1200) + text_form(1800) + text_hold(1000) + rain_close(800) = 4800ms
-  // Start fading in corridor just as rain_close ends / fade_out begins
+  // Fade in the corridor behind the PageLoader so it's fully ready when the loader disappears.
+  // PageLoader phases: rain_in(1200) + text_form(1800) + text_hold(1000) + rain_close(800) + fade_out(1000) = 5800ms
+  // Start corridor early so the 500ms CSS transition finishes before the PageLoader is gone.
   useEffect(() => {
-    const timer = setTimeout(() => setSceneVisible(true), 4600);
+    const timer = setTimeout(() => setSceneVisible(true), 4200);
     return () => clearTimeout(timer);
   }, []);
 
@@ -150,7 +150,7 @@ export default function Hero() {
 
       {/* Fade-in from black (covers the first moment while WebGL initializes) */}
       <div
-        className={`absolute inset-0 bg-black pointer-events-none z-20 transition-opacity duration-[800ms] ease-out ${
+        className={`absolute inset-0 bg-black pointer-events-none z-20 transition-opacity duration-500 ease-out ${
           sceneVisible ? "opacity-0" : "opacity-100"
         }`}
         aria-hidden="true"
