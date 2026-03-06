@@ -12,6 +12,16 @@ export interface Project {
 
 export const projects: Project[] = [
   {
+    id: "cobroya",
+    title: "CobroYa",
+    description:
+      "Open-source Mercado Pago payment platform with MCP server, OpenAI function calling, LangChain tools (Python), Telegram bot, WhatsApp Business API, and automation adapters for n8n, Zapier, Make, and Pipedream. Published on npm & PyPI with 212+ tests.",
+    url: "https://cobroya.app",
+    github: "https://github.com/dan1d/mercadopago-tool",
+    tags: ["TypeScript", "Python", "MCP", "OpenAI", "LangChain", "Payments"],
+    featured: true,
+  },
+  {
     id: "codeprism",
     title: "CodePrism",
     description:
@@ -20,16 +30,6 @@ export const projects: Project[] = [
     tags: ["SaaS", "AI", "Knowledge Graph", "Engineering"],
     featured: true,
     image: "/projects/codeprism.png",
-  },
-  {
-    id: "vulnsentry",
-    title: "VulnSentry",
-    description:
-      "Ruby CVE auto-PR bot — Rails 8 app that detects vulnerabilities in Ruby bundled gems and prepares human-reviewable bump PRs. Conservative, fail-closed safety model with DeepSeek cross-checks.",
-    url: "https://vulnsentry.com",
-    github: "https://github.com/dan1d/vulnsentry",
-    tags: ["Rails 8", "Security", "Automation", "Ruby"],
-    featured: true,
   },
   {
     id: "biobridge",
@@ -41,13 +41,13 @@ export const projects: Project[] = [
     featured: true,
   },
   {
-    id: "cobroya",
-    title: "CobroYa",
+    id: "vulnsentry",
+    title: "VulnSentry",
     description:
-      "Open-source Mercado Pago payment platform with MCP server, OpenAI function calling, LangChain tools (Python), Telegram bot, WhatsApp Business API, and automation adapters for n8n, Zapier, Make, and Pipedream. Published on npm & PyPI with 212+ tests.",
-    url: "https://cobroya.app",
-    github: "https://github.com/dan1d/mercadopago-tool",
-    tags: ["TypeScript", "Python", "MCP", "OpenAI", "LangChain", "Payments"],
+      "Ruby CVE auto-PR bot — Rails 8 app that detects vulnerabilities in Ruby bundled gems and prepares human-reviewable bump PRs. Conservative, fail-closed safety model with DeepSeek cross-checks.",
+    url: "https://vulnsentry.com",
+    github: "https://github.com/dan1d/vulnsentry",
+    tags: ["Rails 8", "Security", "Automation", "Ruby"],
     featured: true,
   },
 ];
