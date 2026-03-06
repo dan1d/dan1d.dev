@@ -40,6 +40,16 @@ export const projects: Project[] = [
     tags: ["Healthcare", "Rails", "React", "Vue", "Monitoring"],
     featured: true,
   },
+  {
+    id: "cobroya",
+    title: "CobroYa",
+    description:
+      "Open-source Mercado Pago toolkit — SDK, MCP server, Telegram bot, and WhatsApp integration. Create payment links, search transactions, and issue refunds through AI agents or chatbots. Published on npm with 212 tests and 99.5% coverage.",
+    url: "https://cobroya.app",
+    github: "https://github.com/dan1d/mercadopago-tool",
+    tags: ["TypeScript", "MCP", "Payments", "AI Agents", "Open Source"],
+    featured: true,
+  },
 ];
 
 export const openSourceProjects: Project[] = [
