@@ -22,16 +22,6 @@ export const projects: Project[] = [
     featured: true,
   },
   {
-    id: "codeprism",
-    title: "CodePrism",
-    description:
-      "Shared AI knowledge graph for engineering teams. Centralized repository that leverages AI to organize and connect engineering knowledge.",
-    url: "https://codeprism.dev",
-    tags: ["SaaS", "AI", "Knowledge Graph", "Engineering"],
-    featured: true,
-    image: "/projects/codeprism.png",
-  },
-  {
     id: "biobridge",
     title: "BioBridge",
     description:
@@ -61,16 +51,6 @@ export const openSourceProjects: Project[] = [
     url: "https://dan1d.dev",
     github: "https://github.com/dan1d/dan1d.dev",
     tags: ["Next.js", "Three.js", "AR", "WebXR"],
-    featured: false,
-  },
-  {
-    id: "codeprism-cli",
-    title: "codeprism-cli",
-    description:
-      "CLI for indexing codebases and pushing knowledge cards to a CodePrism engine.",
-    url: "https://github.com/dan1d/codeprism-cli",
-    github: "https://github.com/dan1d/codeprism-cli",
-    tags: ["CLI", "AI", "TypeScript"],
     featured: false,
   },
   {
@@ -173,7 +153,6 @@ export const socialLinks: SocialLink[] = [
     icon: "linkedin",
   },
   { name: "Email", url: "mailto:danielfromarg@gmail.com", icon: "mail" },
-  { name: "CodePrism", url: "https://codeprism.dev", icon: "code" },
 ];
 
 export const siteConfig = {
@@ -181,7 +160,7 @@ export const siteConfig = {
   handle: "dan1d",
   title: "Senior Full-Stack Engineer",
   description:
-    "Senior Full-Stack Engineer with 12+ years building scalable web & mobile apps. Ruby on Rails, React, AWS. Creator of CodePrism & VulnSentry.",
+    "Senior Full-Stack Engineer with 12+ years building scalable web & mobile apps. Ruby on Rails, React, AWS. Creator of VulnSentry & CobroYa.",
   url: "https://dan1d.dev",
   resumeUrl: "/resume.pdf",
 };

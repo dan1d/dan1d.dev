@@ -336,22 +336,6 @@ export default function MatrixResume() {
             <span className="text-green-400/40 ml-1">/ar?view=resume</span>
           </a>
 
-          {/* View CodePrism */}
-          <a
-            href="https://codeprism.dev"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group inline-flex items-center gap-2 px-5 py-2.5 border border-green-400/30 bg-black font-mono text-xs text-green-400/70 tracking-widest transition-all duration-200 hover:border-green-400/60 hover:bg-green-400/5 hover:text-green-400"
-          >
-            <span className="text-green-400/40 group-hover:text-green-400/60">
-              [
-            </span>
-            ACTIVE_PROJECT
-            <span className="text-green-400/40 group-hover:text-green-400/60">
-              ]
-            </span>
-            <span className="text-green-400/40 ml-1">codeprism.dev</span>
-          </a>
         </div>
       </div>
     </section>

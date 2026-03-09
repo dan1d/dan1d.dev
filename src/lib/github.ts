@@ -29,7 +29,7 @@ export interface SkylineCell {
 }
 
 export interface RepoContribution {
-  name: string;           // repo name (e.g. "dan1d/codeprism")
+  name: string;           // repo name (e.g. "dan1d/dan1d.dev")
   contributions: number;  // commit count to this repo
   url: string;
   language?: string;

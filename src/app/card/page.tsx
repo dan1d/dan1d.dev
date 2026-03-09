@@ -263,7 +263,7 @@ function DownloadButton() {
             `TITLE:${siteConfig.title}`,
             "EMAIL;TYPE=INTERNET:danielfromarg@gmail.com",
             `URL;TYPE=Portfolio:${siteConfig.url}`,
-            "URL;TYPE=Project:https://codeprism.dev",
+            "URL;TYPE=Project:https://cobroya.app",
             "END:VCARD",
           ].join("\r\n");
 
@@ -339,12 +339,6 @@ const icons: Record<string, React.ReactNode> = {
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
       <rect width="20" height="16" x="2" y="4" rx="2" />
       <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-    </svg>
-  ),
-  CodePrism: (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
-      <polyline points="16 18 22 12 16 6" />
-      <polyline points="8 6 2 12 8 18" />
     </svg>
   ),
 };
@@ -893,7 +887,7 @@ export default function CardPage() {
                         rel={link.url.startsWith("mailto:") ? undefined : "noopener noreferrer"}
                         className="relative p-3 border border-green-400/20 text-green-400/50 hover:text-green-400 hover:border-green-400/60 hover:bg-green-400/10 hover:shadow-[0_0_20px_rgba(0,255,65,0.2)] transition-all duration-300 group/link"
                       >
-                        {icons[link.name] ?? icons.CodePrism}
+                        {icons[link.name] ?? icons.GitHub}
                         <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[8px] text-green-400/0 group-hover/link:text-green-400/50 transition-colors whitespace-nowrap tracking-wider">
                           {link.name.toUpperCase()}
                         </span>

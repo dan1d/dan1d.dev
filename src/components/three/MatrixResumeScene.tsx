@@ -33,7 +33,7 @@ const RESUME_LINES = [
   "",
   "> ACTIVE_PROJECTS",
   "",
-  "  CodePrism .... AI Knowledge Graph for Engineering Teams",
+  "  CobroYa ...... Open-Source Payment Platform",
   "  VulnSentry ... Ruby CVE Auto-PR Bot",
   "  Status ....... OPERATIONAL",
   "",

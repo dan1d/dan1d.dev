@@ -36,17 +36,15 @@ describe("AR Business Card page", () => {
     expect(screen.getByText("@dan1d")).toBeInTheDocument();
   });
 
-  it("renders social links for GitHub, LinkedIn, Email, and CodePrism", () => {
+  it("renders social links for GitHub, LinkedIn, and Email", () => {
     render(<CardPage />);
     const githubLink = screen.getByRole("link", { name: /github/i });
     const linkedinLink = screen.getByRole("link", { name: /linkedin/i });
     const emailLink = screen.getByRole("link", { name: /email/i });
-    const codeprismLink = screen.getByRole("link", { name: /codeprism/i });
 
     expect(githubLink).toBeInTheDocument();
     expect(linkedinLink).toBeInTheDocument();
     expect(emailLink).toBeInTheDocument();
-    expect(codeprismLink).toBeInTheDocument();
   });
 
   it("renders a QR code with data-testid='card-qr'", () => {

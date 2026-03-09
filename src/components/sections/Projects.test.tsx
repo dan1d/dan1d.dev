@@ -38,32 +38,32 @@ describe("Projects section", () => {
     expect(screen.getByRole("heading", { name: /projects/i })).toBeInTheDocument();
   });
 
-  it("renders CodePrism project card with correct title", () => {
+  it("renders VulnSentry project card with correct title", () => {
     render(<Projects />);
-    expect(screen.getByText("CodePrism")).toBeInTheDocument();
+    expect(screen.getByText("VulnSentry")).toBeInTheDocument();
   });
 
-  it("renders CodePrism description", () => {
+  it("renders VulnSentry description", () => {
     render(<Projects />);
     expect(
-      screen.getByText(/Shared AI knowledge graph for engineering teams/i)
+      screen.getByText(/Ruby CVE auto-PR bot/i)
     ).toBeInTheDocument();
   });
 
-  it("project card has a link to codeprism.dev", () => {
+  it("project card has a link to vulnsentry.com", () => {
     render(<Projects />);
-    const link = screen.getByRole("link", { name: /visit codeprism/i });
+    const link = screen.getByRole("link", { name: /visit vulnsentry/i });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "https://codeprism.dev");
+    expect(link).toHaveAttribute("href", "https://vulnsentry.com");
   });
 
-  it("renders project tags (SaaS, AI, etc.)", () => {
+  it("renders project tags (Rails 8, Security, etc.)", () => {
     render(<Projects />);
-    const codeprismCard = screen.getByText("CodePrism").closest("article")!;
-    expect(within(codeprismCard).getByText("SaaS")).toBeInTheDocument();
-    expect(within(codeprismCard).getByText("AI")).toBeInTheDocument();
-    expect(within(codeprismCard).getByText("Knowledge Graph")).toBeInTheDocument();
-    expect(within(codeprismCard).getByText("Engineering")).toBeInTheDocument();
+    const card = screen.getByText("VulnSentry").closest("article")!;
+    expect(within(card).getByText("Rails 8")).toBeInTheDocument();
+    expect(within(card).getByText("Security")).toBeInTheDocument();
+    expect(within(card).getByText("Automation")).toBeInTheDocument();
+    expect(within(card).getByText("Ruby")).toBeInTheDocument();
   });
 
   it("featured projects have a featured badge with data-testid='featured-badge'", () => {
@@ -88,7 +88,7 @@ describe("Projects section", () => {
   it("renders a grid container for project cards", () => {
     render(<Projects />);
     // The grid wrapper should contain the project card
-    const card = screen.getByText("CodePrism").closest("article");
+    const card = screen.getByText("VulnSentry").closest("article");
     expect(card).toBeInTheDocument();
   });
 });
