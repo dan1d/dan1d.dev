@@ -295,43 +295,13 @@ export default function ResumePdfDocument() {
           ))}
         </View>
 
-        {/* ── Experience (page 1: first 3 roles) ── */}
+        {/* ── Experience ── */}
         <View style={s.section}>
           <Text style={s.sectionTitle}>// Experience</Text>
-          {d.experience.slice(0, 3).map((exp) => (
+          {d.experience.map((exp) => (
             <ExperienceEntry key={`${exp.company}-${exp.startDate}`} exp={exp} />
           ))}
         </View>
-
-        {/* Footer */}
-        <PageFooter />
-      </Page>
-
-      {/* ── Page 2: More experience ── */}
-      <Page size="LETTER" style={s.page}>
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>// Experience (continued)</Text>
-          {d.experience.slice(3, 7).map((exp) => (
-            <ExperienceEntry key={`${exp.company}-${exp.startDate}`} exp={exp} />
-          ))}
-        </View>
-
-        <PageFooter />
-      </Page>
-
-      {/* ── Page 3: Remaining experience + Skills + Volunteering ── */}
-      <Page size="LETTER" style={s.page}>
-        {d.experience.length > 7 && (
-          <View style={s.section}>
-            <Text style={s.sectionTitle}>// Experience (continued)</Text>
-            {d.experience.slice(7).map((exp) => (
-              <ExperienceEntry
-                key={`${exp.company}-${exp.startDate}`}
-                exp={exp}
-              />
-            ))}
-          </View>
-        )}
 
         {/* ── Skills ── */}
         <View style={s.section}>
