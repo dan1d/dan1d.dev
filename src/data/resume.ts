@@ -62,7 +62,7 @@ export const resumeData: ResumeData = {
   },
 
   profile:
-    "Senior Full-Stack Engineer with 12+ years of experience designing, building, and operating scalable web and mobile applications. Strong background in Ruby on Rails and modern JavaScript frameworks, with deep expertise across backend systems, frontend architecture, APIs, and cloud deployments. Extensive experience owning features end-to-end: from system design and API architecture to AWS-based deployments, CI/CD pipelines, and production monitoring.",
+    "Senior Full-Stack Engineer with 12+ years of experience designing, building, and operating scalable web and mobile applications. Strong background in Ruby on Rails and modern JavaScript frameworks, with deep expertise across backend systems, frontend architecture, APIs, and cloud deployments. Actively building AI-integrated tools and MCP servers for AI agents, published on npm. Extensive experience owning features end-to-end: from system design and API architecture to AWS-based deployments, CI/CD pipelines, and production monitoring.",
 
   coreStrengths: [
     {
@@ -84,6 +84,11 @@ export const resumeData: ResumeData = {
       area: "Cloud & DevOps",
       description:
         "Hands-on experience deploying and operating applications on AWS (EC2, ECS/EKS, S3, RDS, CloudWatch), containerization with Docker, and CI/CD pipelines using GitHub Actions / Jenkins.",
+    },
+    {
+      area: "AI & MCP Tooling",
+      description:
+        "Building MCP (Model Context Protocol) servers and AI-integrated tools published on npm. Experience with OpenAI function calling, LangChain, and multi-platform AI agent integrations (Telegram, WhatsApp, n8n, Zapier).",
     },
     {
       area: "Quality-Driven Engineering",
@@ -397,6 +402,9 @@ export const resumeData: ResumeData = {
     "Cypress",
     "Sidekiq",
     "Apache Kafka",
+    "MCP (Model Context Protocol)",
+    "OpenAI",
+    "LangChain",
   ],
 
   languages: [

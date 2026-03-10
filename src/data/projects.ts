@@ -113,6 +113,26 @@ export const openSourceProjects: Project[] = [
     tags: ["Ruby", "OmniAuth", "OAuth2"],
     featured: false,
   },
+  {
+    id: "dolar-mcp",
+    title: "@dan1d/dolar-mcp",
+    description:
+      "MCP server for Argentine exchange rates — real-time dollar blue, oficial, MEP, CCL, crypto rates via DolarAPI. Currency conversion and spread calculator for AI agents. No API key required.",
+    url: "https://www.npmjs.com/package/@dan1d/dolar-mcp",
+    github: "https://github.com/dan1d/dolar-mcp",
+    tags: ["TypeScript", "MCP", "AI Agents", "Finance"],
+    featured: false,
+  },
+  {
+    id: "mercadolibre-mcp",
+    title: "@dan1d/mercadolibre-mcp",
+    description:
+      "MCP server for MercadoLibre marketplace — search products, browse categories, trends across 18 LATAM countries. No API key required for public endpoints.",
+    url: "https://www.npmjs.com/package/@dan1d/mercadolibre-mcp",
+    github: "https://github.com/dan1d/mercadolibre-mcp",
+    tags: ["TypeScript", "MCP", "AI Agents", "E-Commerce"],
+    featured: false,
+  },
 ];
 
 export interface RailsContribution {
