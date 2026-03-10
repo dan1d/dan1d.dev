@@ -5,10 +5,12 @@ import GitHubSkyline from "@/components/sections/GitHubSkyline";
 import MatrixResume from "@/components/sections/MatrixResume";
 import BusinessCard from "@/components/sections/BusinessCard";
 import ScrollRabbit from "@/components/ui/ScrollRabbit";
+import ScrollToTop from "@/components/ui/ScrollToTop";
 
 export default function Home() {
   return (
     <main className="bg-black">
+      <ScrollToTop />
       <ScrollRabbit />
       <Hero />
       <Projects />
