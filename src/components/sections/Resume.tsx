@@ -1,39 +1,14 @@
 "use client";
 
 import { skills, siteConfig } from "@/data/projects";
+import { resumeData, formatDateRange } from "@/data/resume";
 
-const recentRoles = [
-  {
-    company: "BioBridge",
-    title: "Sr Full-Stack Engineer",
-    period: "2024 – Present",
-    highlights: [
-      "Led development of cardiac remote monitoring platform for clinicians",
-      "Designed health status & incident reporting system (AWS Health-style)",
-      "Built real-time device data ingestion and patient monitoring workflows",
-    ],
-  },
-  {
-    company: "Acima Credit",
-    title: "Sr Software Engineer",
-    period: "2021 – 2024",
-    highlights: [
-      "Led Ruby on Rails + React platform serving 1M+ users",
-      "Architected microservices reducing latency by 40%",
-      "Mentored team of 6 engineers across 3 squads",
-    ],
-  },
-  {
-    company: "2U",
-    title: "Sr Software Engineer",
-    period: "2019 – 2021",
-    highlights: [
-      "Built edtech platform used by 100k+ learners globally",
-      "Implemented GraphQL API layer with TypeScript",
-      "Improved CI/CD pipelines cutting deploy time by 60%",
-    ],
-  },
-];
+const recentRoles = resumeData.experience.slice(0, 3).map((exp) => ({
+  company: exp.company,
+  title: exp.title,
+  period: formatDateRange(exp.startDate, exp.endDate),
+  highlights: exp.highlights.slice(0, 3),
+}));
 
 export default function Resume() {
   return (
