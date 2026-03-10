@@ -275,11 +275,11 @@ export default function MatrixResume() {
             aria-hidden="true"
           >
             <a
-              href="/resume.pdf"
+              href="/api/resume"
               download
               className="text-green-400/60 text-xs tracking-wider hover:text-green-400 transition-colors duration-200"
             >
-              [VIEW_SOURCE] &rarr; /resume.pdf
+              [VIEW_SOURCE] &rarr; /api/resume
             </a>
           </div>
 
@@ -306,7 +306,7 @@ export default function MatrixResume() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-8">
           {/* Download Resume */}
           <a
-            href="/resume.pdf"
+            href="/api/resume"
             download
             className="group inline-flex items-center gap-2 px-5 py-2.5 border border-green-400/50 bg-black font-mono text-xs text-green-400 tracking-widest transition-all duration-200 hover:border-green-400 hover:bg-green-400/10 hover:text-lime-300"
             style={{ textShadow: "0 0 6px #00ff41" }}

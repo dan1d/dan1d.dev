@@ -43,7 +43,7 @@ export default function AdminPage() {
       a.download = "resume.pdf";
       a.click();
       URL.revokeObjectURL(url);
-      setStatus("PDF generated and downloaded successfully. Replace public/resume.pdf with the downloaded file.");
+      setStatus("PDF regenerated successfully. The live /api/resume endpoint cache has been purged — visitors will now get the updated version.");
     } catch (err) {
       setStatus(`Error: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -220,8 +220,8 @@ export default function AdminPage() {
                 following Harvard resume best practices.
               </p>
               <p className="text-xs text-green-400/50 mb-6 leading-relaxed">
-                After downloading, replace <code className="text-green-400/80">public/resume.pdf</code>{" "}
-                with the generated file and deploy.
+                Clicking generate will regenerate the PDF and purge the cache.
+                Visitors will automatically get the updated version from <code className="text-green-400/80">/api/resume</code>.
               </p>
               <button
                 onClick={handleGeneratePdf}

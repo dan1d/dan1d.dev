@@ -171,7 +171,7 @@ export default function Resume() {
             {/* iframe embed */}
             <div className="relative w-full" style={{ height: "600px" }}>
               <iframe
-                src="/resume.pdf"
+                src="/api/resume"
                 title="Resume — Daniel Alejandro Dominguez Diaz"
                 className="w-full h-full border-0"
               />
@@ -182,7 +182,7 @@ export default function Resume() {
         {/* Bottom action row */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <a
-            href="/resume.pdf"
+            href="/api/resume"
             download
             className="inline-flex items-center gap-3 px-6 py-3 font-mono text-sm tracking-widest border border-green-400/50 text-green-400 hover:border-green-400 hover:bg-green-400/10 hover:shadow-[0_0_20px_rgba(0,255,65,0.15)] transition-all duration-300"
           >

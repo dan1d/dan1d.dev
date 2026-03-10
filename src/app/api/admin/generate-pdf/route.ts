@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import React from "react";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function checkAuth(req: NextRequest): boolean {
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) return false;
-  const auth = req.headers.get("x-admin-secret");
-  return auth === secret;
-}
 
 export async function POST(req: NextRequest) {
   const secret = process.env.ADMIN_SECRET;
@@ -18,17 +12,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: "Unauthorized",
-        debug: {
-          envSet: !!secret,
-          headerSent: !!auth,
-        },
+        debug: { envSet: !!secret, headerSent: !!auth },
       },
       { status: 401 }
     );
   }
 
   try {
-    // Dynamic import to avoid bundling issues
     const { renderToBuffer } = await import("@react-pdf/renderer");
     const { default: ResumePdfDocument } = await import(
       "@/lib/resumePdfDocument"
@@ -37,6 +27,9 @@ export async function POST(req: NextRequest) {
     const buffer = await renderToBuffer(
       React.createElement(ResumePdfDocument)
     );
+
+    // Purge the cached /api/resume so next visitor gets the fresh PDF
+    revalidatePath("/api/resume");
 
     const uint8 = new Uint8Array(buffer);
     return new NextResponse(uint8, {

@@ -15,11 +15,11 @@ describe("Resume section", () => {
     expect(heading.textContent).toMatch(/resume/i);
   });
 
-  it("renders a 'Download PDF' link that points to /resume.pdf", () => {
+  it("renders a 'Download PDF' link that points to /api/resume", () => {
     render(<Resume />);
     const link = screen.getByRole("link", { name: /download pdf/i });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "/resume.pdf");
+    expect(link).toHaveAttribute("href", "/api/resume");
   });
 
   it("renders a 'View in AR' button with data-testid='resume-ar-btn'", () => {
@@ -67,7 +67,7 @@ describe("Resume section", () => {
     render(<Resume />);
     const iframe = document.querySelector("iframe");
     expect(iframe).toBeInTheDocument();
-    expect(iframe).toHaveAttribute("src", "/resume.pdf");
+    expect(iframe).toHaveAttribute("src", "/api/resume");
   });
 
   it("the 'View in AR' button links to /ar?view=resume", () => {

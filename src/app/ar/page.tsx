@@ -285,7 +285,7 @@ function ARPageContent() {
 
               <div className="space-y-3">
                 <a
-                  href="/resume.pdf"
+                  href="/api/resume"
                   download
                   className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg font-mono text-xs text-green-400 border border-green-400/40 bg-green-400/5 tracking-widest hover:bg-green-400/10 hover:border-green-400/60 transition-all duration-200"
                   style={{ textShadow: "0 0 6px #00ff41" }}

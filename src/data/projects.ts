@@ -182,7 +182,7 @@ export const siteConfig = {
   description:
     "Senior Full-Stack Engineer with 12+ years building scalable web & mobile apps. Ruby on Rails, React, AWS. Creator of VulnSentry & CobroYa.",
   url: "https://dan1d.dev",
-  resumeUrl: "/resume.pdf",
+  resumeUrl: "/api/resume",
 };
 
 export const skills = [
