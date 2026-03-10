@@ -3,129 +3,94 @@
 import { useRef, useEffect, useCallback } from "react";
 import { MATRIX_CHARS } from "@/lib/matrix";
 
-// ─── Rabbit ASCII sprites (20 wide × 24 tall) ──────────────────────────────
-// Density: '#' = 1.0, '+' = 0.7, '.' = 0.4, ' ' = 0
+// ─── Rabbit silhouette mask (40 wide × 52 tall) ────────────────────────────
+// 1 = inside rabbit, 0 = outside. Sitting rabbit with tall ears, side profile.
 
-const RABBIT_STAND = [
-  "      ..##..        ",
-  "     .+####.        ",
-  "    .+#####+.       ",
-  "    +########.      ",
-  "    +########.      ",
-  "    .+######+.      ",
-  "     .+####+.       ",
-  "      .####.        ",
-  "     .######.       ",
-  "    .+######+.      ",
-  "   .##########+.    ",
-  "   +###########.    ",
-  "  .############+.   ",
-  "  +#############.   ",
-  "  .############+.   ",
-  "   +##########.     ",
-  "   .#########.      ",
-  "    .+######.       ",
-  "     +#####+.       ",
-  "    .#+..+##.       ",
-  "    +#.  .#+.       ",
-  "   .#+    +#.       ",
-  "   .#.    .#.       ",
-  "   ..      ..       ",
+/* prettier-ignore */
+const RABBIT_MASK = [
+  "0000000000001100000000000000000000000000",
+  "0000000000011110000000000000000000000000",
+  "0000000000111111000000000000000000000000",
+  "0000000001111111000000000000000000000000",
+  "0000000011111111100000000000000000000000",
+  "0000000011111111100001100000000000000000",
+  "0000000111111111100011110000000000000000",
+  "0000000111111111110011111000000000000000",
+  "0000001111111111110111111100000000000000",
+  "0000001111111111111111111100000000000000",
+  "0000001111111111111111111110000000000000",
+  "0000011111111111111111111110000000000000",
+  "0000011111111111111111111111000000000000",
+  "0000011111111111111111111111000000000000",
+  "0000011111111111111111111111100000000000",
+  "0000001111111111111111111111100000000000",
+  "0000000111111111111111111111100000000000",
+  "0000000011111111111111111111100000000000",
+  "0000000001111111111111111111000000000000",
+  "0000000000111111111111111111000000000000",
+  "0000000000011111111111111110000000000000",
+  "0000000000011111111111111100000000000000",
+  "0000000000111111111111111100000000000000",
+  "0000000001111111111111111110000000000000",
+  "0000000011111111111111111111000000000000",
+  "0000000111111111111111111111100000000000",
+  "0000001111111111111111111111110000000000",
+  "0000011111111111111111111111111000000000",
+  "0000111111111111111111111111111100000000",
+  "0001111111111111111111111111111110000000",
+  "0011111111111111111111111111111111000000",
+  "0111111111111111111111111111111111100000",
+  "0111111111111111111111111111111111110000",
+  "1111111111111111111111111111111111111000",
+  "1111111111111111111111111111111111111100",
+  "1111111111111111111111111111111111111110",
+  "1111111111111111111111111111111111111111",
+  "1111111111111111111111111111111111111111",
+  "1111111111111111111111111111111111111111",
+  "0111111111111111111111111111111111111111",
+  "0111111111111111111111111111111111111110",
+  "0011111111111111111111111111111111111100",
+  "0011111111111111111111111111111111111100",
+  "0001111111111111111111111111111111111000",
+  "0001111111111111100011111111111111110000",
+  "0000111111111111000001111111111111100000",
+  "0000011111111110000000111111111111000000",
+  "0000001111111100000000011111111110000000",
+  "0000001111111100000000011111111100000000",
+  "0000001111111000000000001111111100000000",
+  "0000001111111000000000001111111000000000",
+  "0000000111110000000000000111111000000000",
 ];
 
-const RABBIT_HOP1 = [
-  "      ..##..        ",
-  "     .+####.        ",
-  "    .+#####+.       ",
-  "    +########.      ",
-  "    +########.      ",
-  "    .+######+.      ",
-  "     .+####+.       ",
-  "      .####.        ",
-  "     .######.       ",
-  "    .+######+.      ",
-  "   .##########+.    ",
-  "   +###########.    ",
-  "  .############+.   ",
-  "  +#############.   ",
-  "  .############+.   ",
-  "   +##########.     ",
-  "   .#########.      ",
-  "    .+######.       ",
-  "     .####.         ",
-  "      +##+.         ",
-  "     .#+.#+.        ",
-  "    .#+  .#+        ",
-  "    .+    .+        ",
-  "                    ",
-];
-
-const RABBIT_HOP2 = [
-  "                    ",
-  "      ..##..        ",
-  "     .+####.        ",
-  "    .+#####+.       ",
-  "    +########.      ",
-  "    +########.      ",
-  "    .+######+.      ",
-  "     .+####+.       ",
-  "      .####.        ",
-  "     .######.       ",
-  "    .+######+.      ",
-  "   .##########+.    ",
-  "   +###########.    ",
-  "  .############+.   ",
-  "  +#############.   ",
-  "   .###########.    ",
-  "    +#########+     ",
-  "    .+######+.      ",
-  "     .+####+.       ",
-  "      .+##+.        ",
-  "       +#.+.        ",
-  "      .+  .+        ",
-  "      .    .        ",
-  "                    ",
-];
-
-const RABBIT_HOP3 = [
-  "                    ",
-  "                    ",
-  "      ..##..        ",
-  "     .+####.        ",
-  "    .+#####+.       ",
-  "    +########.      ",
-  "    .+######+.      ",
-  "     .+####+.       ",
-  "      .####.        ",
-  "     .######.       ",
-  "    .+######+.      ",
-  "   .##########+.    ",
-  "   +###########.    ",
-  "  .############+.   ",
-  "  +############.    ",
-  "   +##########.     ",
-  "   .########+.      ",
-  "    .+#####+.       ",
-  "     +####.         ",
-  "     .+#+.          ",
-  "    .+#.+#.         ",
-  "    .+. .+.         ",
-  "    .    .          ",
-  "                    ",
-];
-
-const HOP_FRAMES = [RABBIT_STAND, RABBIT_HOP1, RABBIT_HOP2, RABBIT_HOP3, RABBIT_HOP2, RABBIT_HOP1];
-
-const SPRITE_W = 20;
-const SPRITE_H = 24;
-const DENSITY_MAP: Record<string, number> = { "#": 1.0, "+": 0.7, ".": 0.4, " ": 0.0 };
-
-const CELL = 6; // px per character cell
-const CANVAS_W = SPRITE_W * CELL;
-const CANVAS_H = SPRITE_H * CELL;
+const MASK_W = 40;
+const MASK_H = RABBIT_MASK.length;
+const CELL = 4; // px per character cell
+const CANVAS_W = MASK_W * CELL;
+const CANVAS_H = MASK_H * CELL;
 
 function randomMatrixChar() {
   return MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
+}
+
+// ─── Rain columns state ─────────────────────────────────────────────────────
+// Each column has falling rain characters inside the rabbit silhouette
+
+interface RainDrop {
+  y: number; // current row position (float for smooth)
+  speed: number; // rows per tick
+  length: number; // trail length
+  chars: string[]; // characters in the trail
+}
+
+function createRainDrop(col: number): RainDrop {
+  // Find the first row where this column enters the rabbit
+  let startRow = -Math.floor(Math.random() * MASK_H);
+  return {
+    y: startRow,
+    speed: 0.15 + Math.random() * 0.25,
+    length: 4 + Math.floor(Math.random() * 8),
+    chars: Array.from({ length: 12 }, () => randomMatrixChar()),
+  };
 }
 
 export default function ScrollRabbit() {
@@ -134,100 +99,138 @@ export default function ScrollRabbit() {
   const stateRef = useRef({
     scrollY: 0,
     lastScrollY: 0,
-    frame: 0,
-    accumDelta: 0,
-    visible: false,
-    rabbitY: 100, // vh offset from top — will be computed
-    charGrid: Array.from({ length: SPRITE_H }, () =>
-      Array.from({ length: SPRITE_W }, () => randomMatrixChar())
+    lastTime: 0,
+    rainDrops: Array.from({ length: MASK_W }, (_, col) => createRainDrop(col)) as RainDrop[],
+    // Static character grid for the silhouette fill
+    charGrid: Array.from({ length: MASK_H }, () =>
+      Array.from({ length: MASK_W }, () => randomMatrixChar())
     ),
-    lastCharSwap: 0,
   });
 
-  const drawFrame = useCallback(() => {
+  const drawFrame = useCallback((timestamp: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const s = stateRef.current;
-    const sprite = HOP_FRAMES[s.frame % HOP_FRAMES.length];
+    const dt = s.lastTime ? (timestamp - s.lastTime) / 16.67 : 1; // normalize to ~60fps
+    s.lastTime = timestamp;
+
+    const scrollDelta = Math.abs(s.scrollY - s.lastScrollY);
+    const isScrolling = scrollDelta > 1;
 
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
-    ctx.font = `${CELL}px monospace`;
+
+    // Update rain drops
+    for (let col = 0; col < MASK_W; col++) {
+      const drop = s.rainDrops[col];
+      // Rain falls faster when scrolling
+      const speedMult = isScrolling ? 2.5 : 0.5;
+      drop.y += drop.speed * dt * speedMult;
+
+      // Reset drop when it's past the mask
+      if (drop.y - drop.length > MASK_H) {
+        s.rainDrops[col] = createRainDrop(col);
+      }
+
+      // Randomize a char in trail occasionally
+      if (Math.random() < 0.05) {
+        const idx = Math.floor(Math.random() * drop.chars.length);
+        drop.chars[idx] = randomMatrixChar();
+      }
+    }
+
+    // Randomize static grid chars occasionally
+    if (Math.random() < 0.3) {
+      const r = Math.floor(Math.random() * MASK_H);
+      const c = Math.floor(Math.random() * MASK_W);
+      s.charGrid[r][c] = randomMatrixChar();
+    }
+
+    // Draw
+    ctx.font = `${CELL + 1}px monospace`;
     ctx.textBaseline = "top";
 
-    for (let row = 0; row < SPRITE_H; row++) {
-      const line = sprite[row] || "";
-      for (let col = 0; col < SPRITE_W; col++) {
-        const ch = line[col] || " ";
-        const density = DENSITY_MAP[ch] ?? 0;
-        if (density <= 0) continue;
+    for (let row = 0; row < MASK_H; row++) {
+      for (let col = 0; col < MASK_W; col++) {
+        if (RABBIT_MASK[row][col] !== "1") continue;
 
-        const alpha = density * 0.9;
-        ctx.fillStyle = `rgba(0, 255, 65, ${alpha})`;
+        const drop = s.rainDrops[col];
+        const headRow = Math.floor(drop.y);
+        const distFromHead = headRow - row;
 
-        // Occasionally swap displayed character for matrix flicker
-        const displayChar = s.charGrid[row][col];
-        ctx.fillText(displayChar, col * CELL, row * CELL);
+        let alpha: number;
+        let bright = false;
 
-        // Core glow for high density
-        if (density >= 0.7) {
-          ctx.fillStyle = `rgba(57, 255, 20, ${density * 0.3})`;
-          ctx.fillText(displayChar, col * CELL, row * CELL);
+        if (distFromHead >= 0 && distFromHead < drop.length) {
+          // Inside the rain trail
+          if (distFromHead === 0) {
+            // Head of the drop — brightest
+            alpha = 1.0;
+            bright = true;
+          } else {
+            // Trail fades
+            alpha = 0.7 - (distFromHead / drop.length) * 0.5;
+          }
+        } else {
+          // Background fill — dim ambient characters
+          alpha = 0.08 + Math.random() * 0.06;
+        }
+
+        const ch = distFromHead >= 0 && distFromHead < drop.chars.length
+          ? drop.chars[distFromHead]
+          : s.charGrid[row][col];
+
+        if (bright) {
+          // Bright head: white-green
+          ctx.fillStyle = `rgba(180, 255, 180, ${alpha})`;
+          ctx.fillText(ch, col * CELL, row * CELL);
+          // Glow layer
+          ctx.fillStyle = `rgba(0, 255, 65, 0.6)`;
+          ctx.fillText(ch, col * CELL, row * CELL);
+        } else {
+          ctx.fillStyle = `rgba(0, 255, 65, ${alpha})`;
+          ctx.fillText(ch, col * CELL, row * CELL);
         }
       }
     }
+
+    s.lastScrollY = s.scrollY;
   }, []);
 
   useEffect(() => {
     const s = stateRef.current;
-
-    // Character flicker interval
-    const flickerInterval = setInterval(() => {
-      const row = Math.floor(Math.random() * SPRITE_H);
-      const col = Math.floor(Math.random() * SPRITE_W);
-      s.charGrid[row][col] = randomMatrixChar();
-    }, 50);
-
     let rafId: number;
 
     const onScroll = () => {
       s.scrollY = window.scrollY;
     };
 
-    const tick = () => {
-      const delta = Math.abs(s.scrollY - s.lastScrollY);
-
-      // Only animate when scrolling
-      if (delta > 2) {
-        s.accumDelta += delta;
-        // Advance hop frame every 80px of scroll
-        if (s.accumDelta > 80) {
-          s.frame = (s.frame + 1) % HOP_FRAMES.length;
-          s.accumDelta = 0;
-        }
-      }
-
-      s.lastScrollY = s.scrollY;
-
-      // Position: rabbit Y tracks scroll progress through the page
+    const tick = (timestamp: number) => {
+      // Position: rabbit Y tracks scroll progress
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
       const progress = docHeight > 0 ? s.scrollY / docHeight : 0;
 
-      // Rabbit travels from top to bottom of viewport
-      const topOffset = 80; // start 80px from top
-      const bottomOffset = window.innerHeight - CANVAS_H - 40;
+      const topOffset = 60;
+      const bottomOffset = window.innerHeight - CANVAS_H - 20;
       const y = topOffset + progress * (bottomOffset - topOffset);
 
       if (wrapperRef.current) {
         wrapperRef.current.style.transform = `translateY(${y}px)`;
         // Fade in after hero, fade out near bottom
-        const opacity = progress < 0.05 ? progress / 0.05 : progress > 0.92 ? (1 - progress) / 0.08 : 1;
-        wrapperRef.current.style.opacity = String(Math.max(0, Math.min(1, opacity)));
+        const opacity =
+          progress < 0.05
+            ? progress / 0.05
+            : progress > 0.92
+              ? (1 - progress) / 0.08
+              : 1;
+        wrapperRef.current.style.opacity = String(
+          Math.max(0, Math.min(1, opacity))
+        );
       }
 
-      drawFrame();
+      drawFrame(timestamp);
       rafId = requestAnimationFrame(tick);
     };
 
@@ -237,36 +240,30 @@ export default function ScrollRabbit() {
     return () => {
       window.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(rafId);
-      clearInterval(flickerInterval);
     };
   }, [drawFrame]);
 
   return (
     <div
       ref={wrapperRef}
-      className="fixed right-4 top-0 z-[50] pointer-events-none hidden lg:block"
+      className="fixed right-2 top-0 z-[50] pointer-events-none hidden lg:block"
       style={{ opacity: 0 }}
       aria-hidden="true"
     >
-      {/* Label */}
-      <div
-        className="font-mono text-[9px] text-green-400/40 tracking-[0.2em] text-center mb-1"
-        style={{ textShadow: "0 0 6px rgba(0,255,65,0.3)" }}
-      >
-        FOLLOW THE
-      </div>
-      <div
-        className="font-mono text-[9px] text-green-400/60 tracking-[0.2em] text-center mb-2"
-        style={{ textShadow: "0 0 8px rgba(0,255,65,0.5)" }}
-      >
-        WHITE RABBIT
-      </div>
       <canvas
         ref={canvasRef}
         width={CANVAS_W}
         height={CANVAS_H}
-        style={{ imageRendering: "pixelated" }}
+        className="drop-shadow-[0_0_12px_rgba(0,255,65,0.3)]"
+        style={{ imageRendering: "auto" }}
       />
+      {/* Label below rabbit */}
+      <div
+        className="font-mono text-[8px] text-green-400/50 tracking-[0.25em] text-center mt-1"
+        style={{ textShadow: "0 0 8px rgba(0,255,65,0.4)" }}
+      >
+        FOLLOW THE WHITE RABBIT
+      </div>
     </div>
   );
 }
