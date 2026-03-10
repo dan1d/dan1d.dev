@@ -12,6 +12,11 @@ import {
   formatDateRange,
   getYearsOfExperience,
 } from "@/data/resume";
+import {
+  projects,
+  openSourceProjects,
+  railsContributions,
+} from "@/data/projects";
 
 // Using built-in Helvetica and Courier fonts (always available, no network needed)
 
@@ -197,6 +202,46 @@ const s = StyleSheet.create({
     borderRadius: 3,
     border: `0.5px solid ${BORDER_GREEN}`,
   },
+  // Projects
+  projectEntry: {
+    marginBottom: 6,
+  },
+  projectName: {
+    fontSize: 9.5,
+    fontFamily: "Helvetica-Bold",
+    color: TEXT_PRIMARY,
+  },
+  projectDesc: {
+    fontSize: 8,
+    color: TEXT_SECONDARY,
+    lineHeight: 1.4,
+    marginTop: 1,
+  },
+  projectLink: {
+    fontSize: 7.5,
+    color: MATRIX_GREEN,
+    textDecoration: "none",
+    marginTop: 1,
+  },
+  // Rails contributions
+  contribEntry: {
+    marginBottom: 4,
+  },
+  contribTitle: {
+    fontSize: 8.5,
+    fontFamily: "Helvetica-Bold",
+    color: TEXT_PRIMARY,
+  },
+  contribDesc: {
+    fontSize: 8,
+    color: TEXT_SECONDARY,
+    lineHeight: 1.4,
+  },
+  contribLink: {
+    fontSize: 7,
+    color: MATRIX_GREEN,
+    textDecoration: "none",
+  },
   // Languages
   langRow: {
     flexDirection: "row",
@@ -313,6 +358,55 @@ export default function ResumePdfDocument() {
               </Text>
             ))}
           </View>
+        </View>
+
+        {/* ── Featured Projects ── */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>// Featured Projects</Text>
+          {projects.map((p) => (
+            <View key={p.id} style={s.projectEntry} wrap={false}>
+              <Text style={s.projectName}>{p.title}</Text>
+              <Text style={s.projectDesc}>{p.description}</Text>
+              <View style={s.techRow}>
+                {p.tags.map((t) => (
+                  <Text key={t} style={s.techTag}>{t}</Text>
+                ))}
+              </View>
+              {p.github && (
+                <Link src={p.github} style={s.projectLink}>{p.github}</Link>
+              )}
+            </View>
+          ))}
+        </View>
+
+        {/* ── Open Source Projects ── */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>// Open Source</Text>
+          {openSourceProjects.map((p) => (
+            <View key={p.id} style={s.contribEntry} wrap={false}>
+              <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
+                <Text style={s.contribTitle}>{p.title}</Text>
+                {p.github && (
+                  <Link src={p.github} style={s.contribLink}>{p.github.replace("https://github.com/", "")}</Link>
+                )}
+              </View>
+              <Text style={s.contribDesc}>{p.description}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* ── Rails Contributions ── */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>// Rails Core Contributions</Text>
+          {railsContributions.map((c) => (
+            <View key={c.id} style={s.contribEntry} wrap={false}>
+              <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
+                <Text style={s.contribTitle}>{c.title}</Text>
+                <Link src={c.url} style={s.contribLink}>{c.url.replace("https://github.com/", "")}</Link>
+              </View>
+              <Text style={s.contribDesc}>{c.description}</Text>
+            </View>
+          ))}
         </View>
 
         {/* ── Volunteering ── */}
