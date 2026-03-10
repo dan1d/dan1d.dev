@@ -411,7 +411,7 @@ export default function ResumePdfDocument() {
 
         {/* ── Volunteering ── */}
         <View style={s.section}>
-          <Text style={s.sectionTitle}>// Open Source & Volunteering</Text>
+          <Text style={s.sectionTitle}>// Volunteering</Text>
           {d.volunteering.map((vol) => (
             <View key={vol.organization} style={s.expEntry}>
               <View style={s.expHeader}>
