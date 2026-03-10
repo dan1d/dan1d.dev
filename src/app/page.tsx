@@ -4,10 +4,12 @@ import ARExperience from "@/components/sections/ARExperience";
 import GitHubSkyline from "@/components/sections/GitHubSkyline";
 import MatrixResume from "@/components/sections/MatrixResume";
 import BusinessCard from "@/components/sections/BusinessCard";
+import ScrollRabbit from "@/components/ui/ScrollRabbit";
 
 export default function Home() {
   return (
     <main className="bg-black">
+      <ScrollRabbit />
       <Hero />
       <Projects />
       <GitHubSkyline />
