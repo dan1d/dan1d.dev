@@ -12,8 +12,19 @@ function checkAuth(req: NextRequest): boolean {
 }
 
 export async function POST(req: NextRequest) {
-  if (!checkAuth(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const secret = process.env.ADMIN_SECRET;
+  const auth = req.headers.get("x-admin-secret");
+  if (!secret || auth !== secret) {
+    return NextResponse.json(
+      {
+        error: "Unauthorized",
+        debug: {
+          envSet: !!secret,
+          headerSent: !!auth,
+        },
+      },
+      { status: 401 }
+    );
   }
 
   try {
