@@ -133,6 +133,146 @@ export const openSourceProjects: Project[] = [
     tags: ["TypeScript", "MCP", "AI Agents", "E-Commerce"],
     featured: false,
   },
+  {
+    id: "hacktheinterview",
+    title: "HackTheInterview",
+    description:
+      "AI-powered real-time interview assistant — transcribes interviewer questions and generates suggested answers in real-time.",
+    url: "https://github.com/dan1d/hacktheinterview",
+    github: "https://github.com/dan1d/hacktheinterview",
+    tags: ["TypeScript", "AI", "Real-Time"],
+    featured: false,
+  },
+  {
+    id: "codeprism-cli",
+    title: "codeprism-cli",
+    description:
+      "CLI for indexing codebases and pushing knowledge cards to a CodePrism engine.",
+    url: "https://github.com/dan1d/codeprism-cli",
+    github: "https://github.com/dan1d/codeprism-cli",
+    tags: ["TypeScript", "CLI", "Dev Tools"],
+    featured: false,
+  },
+  {
+    id: "epos-now-client",
+    title: "epos_now_client",
+    description:
+      "Ruby client for the Epos Now POS API (V4). Basic Auth, pagination, 10 resources, 100% test coverage.",
+    url: "https://github.com/dan1d/epos_now_client",
+    github: "https://github.com/dan1d/epos_now_client",
+    tags: ["Ruby", "API Client", "POS"],
+    featured: false,
+  },
+  {
+    id: "lbry-api-ruby",
+    title: "lbry-api-ruby",
+    description:
+      "Ruby wrapper for LBRY and LBRYcrd APIs.",
+    url: "https://github.com/dan1d/lbry-api-ruby",
+    github: "https://github.com/dan1d/lbry-api-ruby",
+    tags: ["Ruby", "Crypto", "API Client"],
+    featured: false,
+  },
+  {
+    id: "omniauth-doordash",
+    title: "omniauth-doordash-oauth2",
+    description:
+      "OmniAuth strategy for DoorDash using JWT authentication.",
+    url: "https://github.com/dan1d/omniauth-doordash-oauth2",
+    github: "https://github.com/dan1d/omniauth-doordash-oauth2",
+    tags: ["Ruby", "OmniAuth", "OAuth2"],
+    featured: false,
+  },
+  {
+    id: "omniauth-gusto",
+    title: "omniauth-gusto-oauth2",
+    description:
+      "OmniAuth OAuth2 strategy for Gusto payroll.",
+    url: "https://github.com/dan1d/omniauth-gusto-oauth2",
+    github: "https://github.com/dan1d/omniauth-gusto-oauth2",
+    tags: ["Ruby", "OmniAuth", "OAuth2"],
+    featured: false,
+  },
+  {
+    id: "omniauth-lightspeed",
+    title: "omniauth-lightspeed-oauth2",
+    description:
+      "OmniAuth OAuth2 strategy for Lightspeed Restaurant (K-Series).",
+    url: "https://github.com/dan1d/omniauth-lightspeed-oauth2",
+    github: "https://github.com/dan1d/omniauth-lightspeed-oauth2",
+    tags: ["Ruby", "OmniAuth", "OAuth2"],
+    featured: false,
+  },
+  {
+    id: "omniauth-uber-eats",
+    title: "omniauth-uber-eats-oauth2",
+    description:
+      "OmniAuth OAuth2 strategy for Uber Eats.",
+    url: "https://github.com/dan1d/omniauth-uber-eats-oauth2",
+    github: "https://github.com/dan1d/omniauth-uber-eats-oauth2",
+    tags: ["Ruby", "OmniAuth", "OAuth2"],
+    featured: false,
+  },
+  {
+    id: "omniauth-wave",
+    title: "omniauth-wave-oauth2",
+    description:
+      "OmniAuth OAuth2 strategy for Wave (by H&R Block).",
+    url: "https://github.com/dan1d/omniauth-wave-oauth2",
+    github: "https://github.com/dan1d/omniauth-wave-oauth2",
+    tags: ["Ruby", "OmniAuth", "OAuth2"],
+    featured: false,
+  },
+  {
+    id: "epos-now-sandbox",
+    title: "epos_now_sandbox_simulator",
+    description:
+      "Ruby gem for simulating POS operations against the Epos Now V4 API. Generates realistic orders, payments, and transactions for sandbox testing.",
+    url: "https://github.com/dan1d/epos_now_sandbox_simulator",
+    github: "https://github.com/dan1d/epos_now_sandbox_simulator",
+    tags: ["Ruby", "Testing", "POS"],
+    featured: false,
+  },
+  {
+    id: "heartland-sandbox",
+    title: "heartland_sandbox_simulator",
+    description:
+      "Heartland Genius Restaurant POS sandbox simulator for SalesToBooks integration testing.",
+    url: "https://github.com/dan1d/heartland_sandbox_simulator",
+    github: "https://github.com/dan1d/heartland_sandbox_simulator",
+    tags: ["Ruby", "Testing", "POS"],
+    featured: false,
+  },
+  {
+    id: "lightspeed-sandbox",
+    title: "lightspeed_sandbox_simulator",
+    description:
+      "Lightspeed K-Series POS sandbox data simulator for development and testing.",
+    url: "https://github.com/dan1d/lightspeed_sandbox_simulator",
+    github: "https://github.com/dan1d/lightspeed_sandbox_simulator",
+    tags: ["Ruby", "Testing", "POS"],
+    featured: false,
+  },
+  {
+    id: "skytab-sandbox",
+    title: "skytab_sandbox_simulator",
+    description:
+      "SkyTab (Shift4) POS sandbox simulator for SalesToBooks integration testing.",
+    url: "https://github.com/dan1d/skytab_sandbox_simulator",
+    github: "https://github.com/dan1d/skytab_sandbox_simulator",
+    tags: ["Ruby", "Testing", "POS"],
+    featured: false,
+  },
+  {
+    id: "square-sandbox",
+    title: "square_sandbox_simulator",
+    description:
+      "Generate realistic POS data in Square sandbox — orders, payments, catalog, customers, refunds. Ruby gem with CLI + programmatic API.",
+    url: "https://github.com/dan1d/square_sandbox_simulator",
+    github: "https://github.com/dan1d/square_sandbox_simulator",
+    tags: ["Ruby", "Testing", "POS"],
+    featured: false,
+  },
 ];
 
 export interface RailsContribution {
