@@ -83,7 +83,7 @@ export default function Navbar() {
             href="/#ar"
             className="hidden md:inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-mono tracking-widest border border-green-400/40 text-green-400 hover:border-green-400 hover:bg-green-400/10 transition-all duration-200"
           >
-            View in AR
+            View in 3D
           </a>
 
           {/* Hamburger */}
@@ -137,7 +137,7 @@ export default function Navbar() {
                 onClick={() => setMenuOpen(false)}
                 className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs tracking-widest border border-green-400/40 text-green-400"
               >
-                View in AR
+                View in 3D
               </a>
             </li>
           </ul>

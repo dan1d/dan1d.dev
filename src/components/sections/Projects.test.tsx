@@ -72,13 +72,13 @@ describe("Projects section", () => {
     expect(badges.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("each project card has a 'View in AR' button with data-testid='ar-view-btn'", () => {
+  it("each project card has a 'View in 3D' button with data-testid='ar-view-btn'", () => {
     render(<Projects />);
     const arButtons = screen.getAllByTestId("ar-view-btn");
     expect(arButtons.length).toBeGreaterThan(0);
   });
 
-  it("'View in AR' button is accessible with an aria-label", () => {
+  it("'View in 3D' button is accessible with an aria-label", () => {
     render(<Projects />);
     const arButtons = screen.getAllByTestId("ar-view-btn");
     expect(arButtons.length).toBeGreaterThan(0);

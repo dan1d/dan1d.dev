@@ -22,7 +22,7 @@ describe("Resume section", () => {
     expect(link).toHaveAttribute("href", "/api/resume");
   });
 
-  it("renders a 'View in AR' button with data-testid='resume-ar-btn'", () => {
+  it("renders a 'View in 3D' button with data-testid='resume-ar-btn'", () => {
     render(<Resume />);
     const btn = screen.getByTestId("resume-ar-btn");
     expect(btn).toBeInTheDocument();
@@ -70,7 +70,7 @@ describe("Resume section", () => {
     expect(iframe).toHaveAttribute("src", "/api/resume");
   });
 
-  it("the 'View in AR' button links to /ar?view=resume", () => {
+  it("the 'View in 3D' button links to /ar?view=resume", () => {
     render(<Resume />);
     const btn = screen.getByTestId("resume-ar-btn");
     expect(btn).toHaveAttribute("href", "/ar?view=resume");

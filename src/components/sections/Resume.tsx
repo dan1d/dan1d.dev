@@ -229,7 +229,7 @@ export default function Resume() {
               <circle cx="12" cy="12" r="3" />
             </svg>
             <span aria-hidden="true">[</span>
-            View in AR
+            View in 3D
             <span aria-hidden="true">]</span>
           </a>
         </div>

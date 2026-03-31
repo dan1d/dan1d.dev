@@ -58,9 +58,8 @@ describe("Hero", () => {
     expect(matches.length).toBeGreaterThan(0);
   });
 
-  it("renders a description line about building with code, AI, and AR", () => {
+  it("renders a description line about building scalable apps", () => {
     renderHero();
-    // The description from siteConfig mentions code, AI, and augmented reality
     expect(screen.getByText(/building/i)).toBeInTheDocument();
   });
 

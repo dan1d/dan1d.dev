@@ -635,15 +635,12 @@ export default function CardPage() {
         >
           <a
             href="/"
-            className="group flex items-center gap-2 text-green-400/60 hover:text-green-400 transition-all duration-300 text-xs tracking-widest"
+            className="group flex items-center gap-2 px-3 py-1.5 border border-green-400/30 bg-black/60 backdrop-blur-sm text-green-400 hover:border-green-400 hover:bg-green-400/10 transition-all duration-300 text-xs tracking-widest"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4" aria-hidden="true">
               <polyline points="15 18 9 12 15 6" />
             </svg>
-            <span className="border-b border-green-400/0 group-hover:border-green-400/40 transition-all">
-              <span className="text-green-400/30 group-hover:text-green-400/60">{"> "}</span>
-              cd ~/portfolio
-            </span>
+            Back
           </a>
           <div className="text-[9px] text-green-400/25 tracking-[0.3em]">
             MATRIX.PROTOCOL.v3.1

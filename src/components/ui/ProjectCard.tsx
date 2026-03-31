@@ -70,14 +70,14 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           <span className="text-green-400/50" aria-hidden="true">]</span>
         </a>
 
-        {/* View in AR button */}
+        {/* View in 3D button */}
         <button
           type="button"
           data-testid="ar-view-btn"
-          aria-label={`View ${title} in AR`}
+          aria-label={`View ${title} in 3D`}
           disabled={!modelUrl}
           className="inline-flex items-center justify-center w-8 h-8 border border-green-400/20 bg-black text-green-400/60 hover:text-green-400 hover:border-green-400/50 transition-colors duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
-          title={modelUrl ? "View in AR" : "AR model coming soon"}
+          title={modelUrl ? "View in 3D" : "3D model coming soon"}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

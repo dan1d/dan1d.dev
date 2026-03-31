@@ -34,8 +34,8 @@ describe("Navbar", () => {
     expect(link).toHaveAttribute("href", "/#github");
   });
 
-  it("renders a 'View in AR' CTA button", () => {
+  it("renders a 'View in 3D' CTA button", () => {
     render(<Navbar />);
-    expect(screen.getByRole("link", { name: /view in ar/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /view in 3d/i })).toBeInTheDocument();
   });
 });
