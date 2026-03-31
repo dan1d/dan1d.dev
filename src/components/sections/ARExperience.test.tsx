@@ -42,18 +42,18 @@ describe("ARExperience section", () => {
     expect(section).toBeInTheDocument();
   });
 
-  it("renders a section title containing 'AR' or 'Augmented Reality'", () => {
+  it("renders a section title containing '3D Experience'", () => {
     render(<ARExperience />);
     const heading = screen.getByRole("heading", { level: 2 });
     expect(heading).toBeInTheDocument();
-    expect(heading.textContent).toMatch(/ar|augmented reality|experience/i);
+    expect(heading.textContent).toMatch(/3d experience/i);
   });
 
-  it("renders descriptive text explaining the AR feature", () => {
+  it("renders descriptive text explaining the 3D feature", () => {
     render(<ARExperience />);
     // Use getAllByText since multiple elements may match; at least one must exist
     const matches = screen.getAllByText(
-      /point your phone|scan|qr code|projects come alive/i
+      /open the 3d viewer|scan|qr code/i
     );
     expect(matches.length).toBeGreaterThan(0);
   });
@@ -70,13 +70,13 @@ describe("ARExperience section", () => {
     expect(qrCode).toHaveAttribute("data-value", "https://dan1d.dev/ar");
   });
 
-  it("renders instructions text for how to use AR", () => {
+  it("renders instructions text for how to use 3D viewer", () => {
     render(<ARExperience />);
     // Check for step-by-step instructions keywords (multiple elements may match)
     const scanMatches = screen.getAllByText(/scan/i);
     expect(scanMatches.length).toBeGreaterThan(0);
-    const surfaceMatches = screen.getAllByText(/surface|camera|point/i);
-    expect(surfaceMatches.length).toBeGreaterThan(0);
+    const viewMatches = screen.getAllByText(/choose|explore|orbit/i);
+    expect(viewMatches.length).toBeGreaterThan(0);
   });
 
   it("renders a 'Launch AR' button with data-testid='launch-ar-btn'", () => {

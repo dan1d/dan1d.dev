@@ -20,9 +20,9 @@ describe("Navbar", () => {
     expect(link).toHaveAttribute("href", "/#projects");
   });
 
-  it("renders an AR Experience navigation link with correct href", () => {
+  it("renders a 3D Experience navigation link with correct href", () => {
     render(<Navbar />);
-    const link = screen.getByRole("link", { name: /ar experience/i });
+    const link = screen.getByRole("link", { name: /3d experience/i });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "/#ar");
   });

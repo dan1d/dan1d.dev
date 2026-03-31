@@ -33,17 +33,17 @@ const steps = [
   {
     number: "1",
     title: "Scan QR Code",
-    description: "Point your phone camera at the code",
+    description: "Open the 3D viewer on your phone",
   },
   {
     number: "2",
-    title: "Point at Surface",
-    description: "Aim your camera at any flat surface",
+    title: "Choose a View",
+    description: "Switch between Matrix Resume and GitHub Skyline",
   },
   {
     number: "3",
-    title: "Explore in AR",
-    description: "Walk around and interact with projects",
+    title: "Explore in 3D",
+    description: "Drag to orbit, scroll to zoom, hover for details",
   },
 ];
 
@@ -194,7 +194,7 @@ export default function ARExperience() {
             className="text-2xl sm:text-3xl font-bold tracking-tight mb-3"
             style={{ color: "#39ff14", textShadow: "0 0 10px #39ff14" }}
           >
-            Experience in AR
+            3D Experience
           </h2>
           <p className="text-sm text-green-400/50 max-w-2xl leading-relaxed">
             &ldquo;
@@ -276,7 +276,7 @@ export default function ARExperience() {
                     <circle cx="12" cy="12" r="3" />
                   </svg>
                   <span aria-hidden="true">[</span>
-                  LAUNCH_AR
+                  LAUNCH_3D
                   <span aria-hidden="true">]</span>
                 </a>
               </div>
@@ -300,7 +300,7 @@ export default function ARExperience() {
               <ol
                 ref={stepsRef}
                 className="space-y-4"
-                aria-label="How to use AR"
+                aria-label="How to use 3D viewer"
               >
                 {steps.map((step) => (
                   <li key={step.number} className="flex items-start gap-4">
@@ -359,7 +359,7 @@ export default function ARExperience() {
             {/* Bottom label */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
               <span className="text-[10px] text-green-400/50 tracking-wider">
-                Powered by WebXR
+                Powered by Three.js
               </span>
             </div>
           </div>

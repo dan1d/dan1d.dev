@@ -93,7 +93,7 @@ export default function Projects() {
             Projects
           </h2>
           <p className="text-sm text-green-400/50 max-w-xl">
-            Things I&apos;ve built — from AI-powered tools to augmented reality experiences.
+            Things I&apos;ve built — from Rails backends to React frontends.
           </p>
           <p className="mt-2 text-green-400/40 text-xs">
             &gt; Inevitable, Mr. Anderson.

@@ -395,7 +395,7 @@ export default function Hero() {
 
           <a
             href="#ar"
-            aria-label="Try AR Experience"
+            aria-label="Try 3D Experience"
             className="inline-flex items-center justify-center px-8 py-3.5 font-mono text-sm tracking-widest border border-green-400/30 text-green-400/70 hover:border-green-400/60 hover:text-green-400 hover:bg-green-400/5 transition-all duration-300"
           >
             <span className="text-green-400/30 mr-1" aria-hidden="true">

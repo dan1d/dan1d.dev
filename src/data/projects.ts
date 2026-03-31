@@ -22,12 +22,12 @@ export const projects: Project[] = [
     featured: true,
   },
   {
-    id: "biobridge",
-    title: "BioBridge",
+    id: "salestobooks",
+    title: "SalesToBooks",
     description:
-      "Cardiac remote monitoring platform for clinicians and healthcare providers. Built health status/incident reporting, real-time device data ingestion, patient monitoring workflows, and clinician dashboards.",
-    url: "https://biobridge.com",
-    tags: ["Healthcare", "Rails", "React", "Vue", "Monitoring"],
+      "Automated restaurant bookkeeping — syncs daily POS sales into accounting software. Integrates with Clover, Square, Toast, QuickBooks, Xero, and 12,000+ banks via Plaid. Multi-location support with auto category mapping.",
+    url: "https://salestobooks.com",
+    tags: ["Rails", "Hotwire", "Plaid", "POS Integrations", "Accounting"],
     featured: true,
   },
   {
@@ -47,10 +47,10 @@ export const openSourceProjects: Project[] = [
     id: "dan1d-dev",
     title: "dan1d.dev",
     description:
-      "This portfolio — an open-source 3D + AR portfolio built with Next.js, React Three Fiber, and WebXR.",
+      "This portfolio — an open-source 3D portfolio built with Next.js and React Three Fiber.",
     url: "https://dan1d.dev",
     github: "https://github.com/dan1d/dan1d.dev",
-    tags: ["Next.js", "Three.js", "AR", "WebXR"],
+    tags: ["Next.js", "Three.js", "React Three Fiber"],
     featured: false,
   },
   {
@@ -320,7 +320,7 @@ export const siteConfig = {
   handle: "dan1d",
   title: "Senior Full-Stack Engineer",
   description:
-    "Senior Full-Stack Engineer with 12+ years building scalable web & mobile apps. Ruby on Rails, React, AWS. Creator of VulnSentry & CobroYa.",
+    "Senior Full-Stack Engineer with 14+ years building scalable web & mobile apps. Ruby on Rails, React, AWS. Open Source contributor.",
   url: "https://dan1d.dev",
   resumeUrl: "/api/resume",
 };

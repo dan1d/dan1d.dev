@@ -71,9 +71,9 @@ describe("Hero", () => {
     expect(link).toHaveAttribute("href", "#projects");
   });
 
-  it("renders a 'Try AR Experience' secondary CTA button with href='#ar'", () => {
+  it("renders a 'Try 3D Experience' secondary CTA button with href='#ar'", () => {
     renderHero();
-    const link = screen.getByRole("link", { name: /try ar experience/i });
+    const link = screen.getByRole("link", { name: /try 3d experience/i });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "#ar");
   });

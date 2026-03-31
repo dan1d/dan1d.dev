@@ -7,7 +7,7 @@ const navLinks = [
   { label: "GitHub", href: "/#github" },
   { label: "Resume", href: "/#resume" },
   { label: "Card", href: "/#card" },
-  { label: "AR Experience", href: "/#ar" },
+  { label: "3D Experience", href: "/#ar" },
 ];
 
 export default function Navbar() {

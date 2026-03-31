@@ -129,7 +129,7 @@ function ARPageContent() {
         <div className="flex items-center gap-2">
           <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse" />
           <span className="text-sm font-semibold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
-            AR Experience
+            3D Experience
           </span>
         </div>
 
@@ -141,7 +141,7 @@ function ARPageContent() {
                 : "text-yellow-400 border-yellow-400/30 bg-yellow-400/5"
             }`}
           >
-            {arSupported ? "AR Ready" : "3D Mode"}
+            3D Mode
           </span>
         )}
       </header>

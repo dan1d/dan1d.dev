@@ -100,9 +100,9 @@ const features = [
         <path d="M12 8v4l3 3" />
       </svg>
     ),
-    label: "AR Experience",
+    label: "3D Experience",
     description:
-      "Scan QR codes to view projects in augmented reality on your device.",
+      "Explore an interactive 3D resume and GitHub contribution skyline.",
   },
   {
     icon: (

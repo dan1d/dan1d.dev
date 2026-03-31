@@ -40,9 +40,9 @@ describe("Instructions overlay", () => {
     expect(matches.length).toBeGreaterThan(0);
   });
 
-  it("mentions AR capabilities", () => {
+  it("mentions 3D capabilities", () => {
     renderWithProvider();
-    expect(screen.getByText(/AR Experience/i)).toBeInTheDocument();
+    expect(screen.getByText(/3D Experience/i)).toBeInTheDocument();
   });
 
   it("has a dismiss button with data-testid='dismiss-instructions'", () => {
@@ -75,9 +75,9 @@ describe("Instructions overlay", () => {
     expect(matches.length).toBeGreaterThan(0);
   });
 
-  it("lists the AR Experience section", () => {
+  it("lists the 3D Experience section", () => {
     renderWithProvider();
-    const matches = screen.getAllByText(/ar experience/i);
+    const matches = screen.getAllByText(/3d experience/i);
     expect(matches.length).toBeGreaterThan(0);
   });
 
