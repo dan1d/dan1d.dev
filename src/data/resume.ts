@@ -102,8 +102,8 @@ export const resumeData: ResumeData = {
       company: "BioBridge",
       companyUrl: "https://biobridge.com",
       title: "Sr Full-Stack Engineer",
-      startDate: "2026-01",
-      endDate: null,
+      startDate: "2025-01",
+      endDate: "2025-12",
       location: "Remote, US",
       companyOverview:
         "Cardiac remote monitoring platform for clinicians and healthcare providers.",
@@ -126,8 +126,8 @@ export const resumeData: ResumeData = {
       company: "Acima Credit",
       companyUrl: "https://acima.com",
       title: "Sr Software Engineer",
-      startDate: "2025-02",
-      endDate: "2026-01",
+      startDate: "2024-07",
+      endDate: "2025-01",
       location: "Remote, US",
       companyOverview:
         "Fintech company focused on lease-to-own and flexible credit solutions, operating at high scale with multiple merchant platform integrations.",
@@ -164,7 +164,7 @@ export const resumeData: ResumeData = {
       companyUrl: "https://2u.com",
       title: "Sr Software Engineer",
       startDate: "2021-07",
-      endDate: "2025-01",
+      endDate: "2024-07",
       location: "Remote, US",
       companyOverview:
         "Publicly traded leader in education technology, recognized for expansive and innovative online learning platforms.",
