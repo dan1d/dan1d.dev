@@ -19,6 +19,16 @@ import {
   CoderDesk,
   CORRIDOR,
 } from "./corridor";
+import { CodeArchitecture } from "./corridor/CodeArchitecture";
+import { CodeClock } from "./corridor/CodeMaterial";
+import type { IntroPhase } from "./corridor";
+
+export type { IntroPhase };
+
+export interface MatrixCorridorSceneProps {
+  onIntroComplete?: () => void;
+  onPhase?: (phase: IntroPhase) => void;
+}
 
 // ─── Error Boundary ─────────────────────────────────────────────────────────
 // R3F Canvas children contain Three.js objects with circular parent/children
@@ -42,7 +52,7 @@ class CanvasErrorBoundary extends Component<
 
 // ─── Main Corridor Scene ────────────────────────────────────────────────────
 
-function CorridorScene({ onIntroComplete }: { onIntroComplete?: () => void }) {
+function CorridorScene({ onIntroComplete, onPhase }: MatrixCorridorSceneProps) {
   const atlas = useMemo(() => buildGlyphAtlas(), []);
   const caOffset = useMemo(() => new THREE.Vector2(0.0006, 0.0006), []);
 
@@ -51,7 +61,7 @@ function CorridorScene({ onIntroComplete }: { onIntroComplete?: () => void }) {
   return (
     <>
       <ambientLight intensity={0.025} />
-      <CinematicCamera onIntroComplete={onIntroComplete} chromaticOffset={caOffset} />
+      <CinematicCamera onIntroComplete={onIntroComplete} onPhase={onPhase} chromaticOffset={caOffset} />
 
       {/* Rain surfaces — all surfaces match floor density (~35 chars/unit) */}
       {/* Walls: D=30 → 400 cols, H=3.5 → 47 rows */}
@@ -76,10 +86,13 @@ function CorridorScene({ onIntroComplete }: { onIntroComplete?: () => void }) {
       <CorridorStructure atlas={atlas} />
 
       {/* Coder at desk — someone coding at the end of the corridor */}
-      <CoderDesk position={[-0.4, 0, -23]} />
+      {/* Corridor bones and the operator's desk — all built from glyphs */}
+      <CodeArchitecture atlas={atlas} />
+      <CoderDesk position={[-0.4, 0, -23]} atlas={atlas} />
+      <CodeClock />
 
       <EffectComposer>
-        <Bloom intensity={2.0} luminanceThreshold={0.15} luminanceSmoothing={0.85} mipmapBlur />
+        <Bloom intensity={1.6} luminanceThreshold={0.25} luminanceSmoothing={0.8} mipmapBlur />
         <Vignette darkness={0.5} offset={0.25} />
         <ChromaticAberration offset={caOffset} radialModulation={false} />
       </EffectComposer>
@@ -89,7 +102,7 @@ function CorridorScene({ onIntroComplete }: { onIntroComplete?: () => void }) {
 
 // ─── Exported Component ─────────────────────────────────────────────────────
 
-export default function MatrixCorridorScene({ onIntroComplete }: { onIntroComplete?: () => void }) {
+export default function MatrixCorridorScene({ onIntroComplete, onPhase }: MatrixCorridorSceneProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
@@ -105,7 +118,7 @@ export default function MatrixCorridorScene({ onIntroComplete }: { onIntroComple
         style={{ background: "#000000" }}
         data-testid="hero-canvas"
       >
-        <CorridorScene onIntroComplete={onIntroComplete} />
+        <CorridorScene onIntroComplete={onIntroComplete} onPhase={onPhase} />
       </Canvas>
     </CanvasErrorBoundary>
   );

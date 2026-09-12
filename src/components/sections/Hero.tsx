@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
+import type { IntroPhase } from "@/components/three/MatrixCorridorScene";
 
 // ─── Visibility hook — unmount WebGL when offscreen to free GPU context ───────
 
@@ -34,43 +35,75 @@ const MatrixCorridorScene = dynamic(
 );
 
 // ─── "Wake up, dan1d..." typing overlay ──────────────────────────────────────
+// Driven by the camera's phase, not a wall-clock timer: it starts typing on
+// the "wake" beat and is cut (not faded) on the "glitch" beat, so the text
+// dies on the same frame the picture stutters.
 
-function WakeUpText({ show }: { show: boolean }) {
+function WakeUpText({ phase }: { phase: IntroPhase }) {
   const fullText = "Wake up, dan1d...";
   const [displayed, setDisplayed] = useState("");
-  const [opacity, setOpacity] = useState(0);
+  const [state, setState] = useState<"idle" | "typing" | "hold" | "cut" | "gone">("idle");
   const startedRef = useRef(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Start typing once, on the "wake" beat. The interval lives in a ref so a
+  // re-render (state change) doesn't tear it down mid-word.
   useEffect(() => {
-    if (!show || startedRef.current) return;
+    if (phase !== "wake" || startedRef.current) return;
     startedRef.current = true;
-
-    // Fade in
-    setOpacity(1);
-
-    // Type characters one by one
+    setState("typing");
     let i = 0;
-    const typeInterval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       i++;
       setDisplayed(fullText.slice(0, i));
       if (i >= fullText.length) {
-        clearInterval(typeInterval);
-        // Hold for 1.5s then fade out
-        setTimeout(() => setOpacity(0), 1500);
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        intervalRef.current = null;
+        setState("hold");
       }
-    }, 80);
+    }, 60);
+  }, [phase]);
 
-    return () => clearInterval(typeInterval);
-  }, [show]);
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
 
-  if (!startedRef.current && !show) return null;
+  // Cut on "glitch" (or anything after it, in case a phase was skipped)
+  useEffect(() => {
+    if (state === "cut" || state === "gone" || state === "idle") return;
+    if (phase === "glitch" || phase === "push" || phase === "settled") {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      setState("cut");
+    }
+  }, [phase, state]);
 
+  // Once cut, unmount after the stutter transition has played
+  useEffect(() => {
+    if (state !== "cut") return;
+    const id = setTimeout(() => setState("gone"), 220);
+    return () => clearTimeout(id);
+  }, [state]);
+
+  // Safety: if the glitch beat never arrives, fade out on our own
+  useEffect(() => {
+    if (state !== "hold") return;
+    const id = setTimeout(() => setState("cut"), 4000);
+    return () => clearTimeout(id);
+  }, [state]);
+
+  if (state === "idle" || state === "gone") return null;
+
+  const cut = state === "cut";
   return (
     <div
       className="absolute inset-0 z-[8] flex items-center justify-center pointer-events-none"
       style={{
-        opacity,
-        transition: "opacity 800ms ease-in-out",
+        opacity: cut ? 0 : 1,
+        transform: cut ? "translateX(6px) skewX(-8deg)" : "none",
+        transition: cut ? "opacity 120ms steps(2), transform 120ms steps(2)" : "none",
       }}
     >
       <p
@@ -84,6 +117,45 @@ function WakeUpText({ show }: { show: boolean }) {
         <span className="animate-pulse">_</span>
       </p>
     </div>
+  );
+}
+
+// ─── Glitch flash — a two-hit white-green flash on the stutter beat ──────────
+// Rendered only while the camera is in its glitch beat; the CSS animation
+// carries the two hits and ends transparent, so no timers are needed.
+
+function GlitchFlash({ phase }: { phase: IntroPhase }) {
+  if (phase !== "glitch") return null;
+  return (
+    <div
+      aria-hidden="true"
+      className="absolute inset-0 z-[9] pointer-events-none glitch-flash"
+      style={{
+        background:
+          "linear-gradient(180deg, rgba(180,255,200,0.9) 0%, rgba(0,255,65,0.55) 45%, rgba(0,0,0,0) 46%, rgba(0,0,0,0) 62%, rgba(0,255,65,0.5) 63%, rgba(180,255,200,0.85) 100%)",
+      }}
+    />
+  );
+}
+
+// ─── Letterbox — 2.39:1 bars during the shot, retract once it settles ───────
+
+function Letterbox({ open }: { open: boolean }) {
+  const bar =
+    "absolute left-0 right-0 bg-black z-[9] pointer-events-none";
+  const style = (edge: "top" | "bottom") => ({
+    height: "11vh",
+    transform: open
+      ? `translateY(${edge === "top" ? "-100%" : "100%"})`
+      : "translateY(0)",
+    transition: "transform 1400ms cubic-bezier(0.77, 0, 0.175, 1)",
+    transitionDelay: open ? "200ms" : "0ms",
+  });
+  return (
+    <>
+      <div aria-hidden="true" className={`${bar} top-0`} style={style("top")} />
+      <div aria-hidden="true" className={`${bar} bottom-0`} style={style("bottom")} />
+    </>
   );
 }
 
@@ -111,7 +183,7 @@ function MatrixQuotes({ show }: { show: boolean }) {
 
   useEffect(() => {
     if (!show || phase !== "idle") return;
-    const timer = setTimeout(() => setPhase("reveal"), 500);
+    const timer = setTimeout(() => setPhase("reveal"), 1800);
     return () => clearTimeout(timer);
   }, [show, phase]);
 
@@ -123,7 +195,6 @@ function MatrixQuotes({ show }: { show: boolean }) {
 
     switch (phase) {
       case "reveal": {
-        // Reveal letters one by one from left
         if (visibleCount < quote.length) {
           timer = setTimeout(() => setVisibleCount((c) => c + 1), 40);
         } else {
@@ -138,7 +209,6 @@ function MatrixQuotes({ show }: { show: boolean }) {
         }, 2500);
         break;
       case "dissolve": {
-        // Remove letters one by one from right
         if (visibleCount > 0) {
           timer = setTimeout(() => setVisibleCount((c) => c - 1), 30);
         } else {
@@ -167,24 +237,19 @@ function MatrixQuotes({ show }: { show: boolean }) {
   return (
     <div className="h-6 flex items-center justify-center">
       <p className="font-mono text-xs md:text-sm tracking-[0.25em] uppercase whitespace-nowrap">
-        {quote.split("").map((char, i) => {
-          const visible = phase === "dissolve"
-            ? i < visibleCount
-            : i < visibleCount;
-          return (
-            <span
-              key={`${index}-${i}`}
-              style={{
-                color: "#00ff41",
-                textShadow: "0 0 6px #00ff4150",
-                opacity: visible ? 0.6 : 0,
-                transition: "opacity 120ms ease",
-              }}
-            >
-              {char}
-            </span>
-          );
-        })}
+        {quote.split("").map((char, i) => (
+          <span
+            key={`${index}-${i}`}
+            style={{
+              color: "#00ff41",
+              textShadow: "0 0 6px #00ff4150",
+              opacity: i < visibleCount ? 0.6 : 0,
+              transition: "opacity 120ms ease",
+            }}
+          >
+            {char}
+          </span>
+        ))}
       </p>
     </div>
   );
@@ -194,25 +259,21 @@ function MatrixQuotes({ show }: { show: boolean }) {
 
 export default function Hero() {
   const subtitleRef = useRef<HTMLParagraphElement>(null);
+  const ruleRef = useRef<HTMLDivElement>(null);
   const descRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const [introComplete, setIntroComplete] = useState(false);
-  const [showWakeUp, setShowWakeUp] = useState(false);
+  const [phase, setPhase] = useState<IntroPhase>("hold");
   const { ref: sectionVisRef, visible: canvasVisible } = useCanvasVisibility("0px");
   const { ready: onboardingReady } = useOnboarding();
 
   const handleIntroComplete = useCallback(() => setIntroComplete(true), []);
+  const handlePhase = useCallback((p: IntroPhase) => setPhase(p), []);
 
-  // Show "Wake up, dan1d..." after camera passes through entrance wall (~2s into anim)
-  useEffect(() => {
-    if (!onboardingReady) return;
-    const timer = setTimeout(() => setShowWakeUp(true), 2000);
-    return () => clearTimeout(timer);
-  }, [onboardingReady]);
-
-  // Reveal UI elements after cinematic intro completes
+  // Reveal UI elements after cinematic intro completes — film-title style:
+  // the rule draws from the center, the title's tracking tightens into place
   useEffect(() => {
     if (!introComplete) return;
 
@@ -225,28 +286,33 @@ export default function Hero() {
         ctx = gsap.context(() => {
           const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-          // Darken corridor for text readability
           if (overlayRef.current) {
-            tl.to(overlayRef.current, { opacity: 1, duration: 1.0 }, 0);
+            tl.to(overlayRef.current, { opacity: 1, duration: 1.2 }, 0);
           }
 
           tl.fromTo(
+              ruleRef.current,
+              { scaleX: 0, opacity: 0 },
+              { scaleX: 1, opacity: 1, duration: 1.1, ease: "power4.inOut" },
+              0.35
+            )
+            .fromTo(
               subtitleRef.current,
-              { opacity: 0, y: 30 },
-              { opacity: 1, y: 0, duration: 0.8 },
-              0.3
+              { opacity: 0, y: 14, letterSpacing: "0.55em" },
+              { opacity: 1, y: 0, letterSpacing: "0.12em", duration: 1.5, ease: "power4.out" },
+              0.55
             )
             .fromTo(
               descRef.current,
-              { opacity: 0, y: 24 },
-              { opacity: 1, y: 0, duration: 0.8 },
-              1.1
+              { opacity: 0, y: 18 },
+              { opacity: 1, y: 0, duration: 0.9 },
+              1.5
             )
             .fromTo(
               ctaRef.current,
-              { opacity: 0, y: 20 },
-              { opacity: 1, y: 0, duration: 0.7 },
-              1.4
+              { opacity: 0, y: 16 },
+              { opacity: 1, y: 0, duration: 0.8 },
+              1.9
             );
         });
       } catch {
@@ -254,6 +320,7 @@ export default function Hero() {
         [subtitleRef, descRef, ctaRef].forEach((ref) => {
           if (ref.current) ref.current.style.opacity = "1";
         });
+        if (ruleRef.current) ruleRef.current.style.opacity = "1";
         if (overlayRef.current) overlayRef.current.style.opacity = "1";
       }
     };
@@ -315,19 +382,23 @@ export default function Hero() {
     <section
       id="hero"
       ref={sectionVisRef}
+      data-intro-phase={phase}
       className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black"
     >
       {/* 3D Matrix corridor — waits for onboarding dismiss, unmounts when scrolled offscreen */}
       <div ref={canvasWrapperRef} className="absolute inset-0">
         {onboardingReady && canvasVisible ? (
-          <MatrixCorridorScene onIntroComplete={handleIntroComplete} />
+          <MatrixCorridorScene onIntroComplete={handleIntroComplete} onPhase={handlePhase} />
         ) : (
           <div className="absolute inset-0 bg-black" data-testid="hero-canvas" />
         )}
       </div>
 
-      {/* "Wake up, dan1d..." typing text — appears after camera passes entrance wall */}
-      <WakeUpText show={showWakeUp} />
+      {/* "Wake up, dan1d..." — typed on the wake beat, cut on the glitch beat */}
+      <WakeUpText phase={phase} />
+
+      {/* Two-hit flash on the glitch beat */}
+      <GlitchFlash phase={phase} />
 
       {/* Darkening overlay for text readability (animated by GSAP on intro complete) */}
       <div
@@ -335,7 +406,7 @@ export default function Hero() {
         className="absolute inset-0 pointer-events-none z-[5] opacity-0"
         style={{
           background:
-            "radial-gradient(ellipse at center, rgba(0,0,0,0.35) 20%, rgba(0,0,0,0.75) 100%)",
+            "radial-gradient(ellipse at center, rgba(0,0,0,0.30) 20%, rgba(0,0,0,0.78) 100%)",
         }}
         aria-hidden="true"
       />
@@ -350,19 +421,33 @@ export default function Hero() {
         aria-hidden="true"
       />
 
+      {/* Film grain */}
+      <div className="film-grain z-[6]" aria-hidden="true" />
+
       {/* Hero content — always in DOM (for tests), animated visible after intro */}
       <div className="absolute inset-0 z-10 flex flex-col items-center text-center px-6 max-w-4xl mx-auto">
         {/* Rotating Matrix quotes — upper area */}
-        <div className="mt-[15vh] md:mt-[12vh]">
+        <div className="mt-[15vh] md:mt-[13vh]">
           <MatrixQuotes show={introComplete} />
         </div>
 
-        {/* Subtitle, description, buttons — pushed to bottom 20% */}
-        <div className="mt-auto mb-[10vh] md:mb-[8vh] flex flex-col items-center">
+        {/* Title block — bottom third, film-title reveal */}
+        <div className="mt-auto mb-[10vh] md:mb-[9vh] flex flex-col items-center">
+          <div
+            ref={ruleRef}
+            className="w-40 md:w-64 h-px mb-5 opacity-0 origin-center"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent, #00ff41 30%, #00ff41 70%, transparent)",
+              boxShadow: "0 0 8px #00ff4180",
+            }}
+            aria-hidden="true"
+          />
+
           <p
             ref={subtitleRef}
-            className="text-xl md:text-2xl font-mono tracking-wider mb-4 opacity-0"
-            style={{ color: "#39ff14", textShadow: "0 0 8px #39ff14" }}
+            className="text-xl md:text-3xl font-mono uppercase mb-4 opacity-0"
+            style={{ color: "#39ff14", textShadow: "0 0 8px #39ff14", letterSpacing: "0.12em" }}
           >
             {siteConfig.title}
           </p>
@@ -409,6 +494,9 @@ export default function Hero() {
         </div>
         </div>
       </div>
+
+      {/* Letterbox bars — cinema aspect during the shot, retract when it settles */}
+      <Letterbox open={introComplete} />
 
       {/* Bottom gradient fade to next section */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent pointer-events-none z-[7]" />
