@@ -103,7 +103,7 @@ export const resumeData: ResumeData = {
       companyUrl: "https://biobridge.com",
       title: "Sr Full-Stack Engineer",
       startDate: "2025-01",
-      endDate: "2025-12",
+      endDate: "2026-08",
       location: "Remote, US",
       companyOverview:
         "Cardiac remote monitoring platform for clinicians and healthcare providers.",
