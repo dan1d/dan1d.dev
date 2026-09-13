@@ -1,31 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import dynamic from "next/dynamic";
+import { useEffect, useRef } from "react";
 
-// ─── Visibility hook — only mount WebGL when near viewport ───────────────────
-
-function useCanvasVisibility(rootMargin = "200px") {
-  const ref = useRef<HTMLElement>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => setVisible(entry.isIntersecting),
-      { rootMargin }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [rootMargin]);
-  return { ref, visible };
-}
 import { QRCodeSVG } from "qrcode.react";
-
-const ARPreviewScene = dynamic(
-  () => import("@/components/three/ARPreviewScene"),
-  { ssr: false }
-);
 
 const AR_URL = "https://dan1d.dev/ar";
 
@@ -48,32 +25,9 @@ const steps = [
 ];
 
 export default function ARExperience() {
-  const { ref: sectionRef, visible: canvasVisible } = useCanvasVisibility("400px");
+  const sectionRef = useRef<HTMLElement>(null);
   const leftPanelRef = useRef<HTMLDivElement>(null);
-  const rightPanelRef = useRef<HTMLDivElement>(null);
   const stepsRef = useRef<HTMLOListElement>(null);
-
-  // ─── WebGL context-loss recovery ──────────────────────────────────────────
-  const [canvasKey, setCanvasKey] = useState(0);
-  const cleanupRef = useRef<(() => void) | null>(null);
-
-  const handleCanvasCreated = useCallback(
-    (state: { gl: { domElement: HTMLCanvasElement } }) => {
-      cleanupRef.current?.();
-      const canvas = state.gl.domElement;
-      const onLost = (e: Event) => {
-        e.preventDefault();
-        setTimeout(() => setCanvasKey((k) => k + 1), 100);
-      };
-      canvas.addEventListener("webglcontextlost", onLost);
-      cleanupRef.current = () => canvas.removeEventListener("webglcontextlost", onLost);
-    },
-    []
-  );
-
-  useEffect(() => {
-    return () => { cleanupRef.current?.(); };
-  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -128,23 +82,6 @@ export default function ARExperience() {
             }
           }
 
-          if (rightPanelRef.current) {
-            gsap.fromTo(
-              rightPanelRef.current,
-              { opacity: 0, x: 60 },
-              {
-                opacity: 1,
-                x: 0,
-                duration: 0.9,
-                ease: "power3.out",
-                scrollTrigger: {
-                  trigger: rightPanelRef.current,
-                  start: "top 80%",
-                  once: true,
-                },
-              }
-            );
-          }
         }, sectionRef);
       } catch {
         // GSAP not available in test/SSR
@@ -204,8 +141,8 @@ export default function ARExperience() {
           </p>
         </div>
 
-        {/* Two-column layout */}
-        <div className="grid lg:grid-cols-2 gap-6 items-start">
+        {/* Single column: QR + instructions */}
+        <div className="max-w-2xl mx-auto">
           {/* Left: QR + instructions */}
           <div ref={leftPanelRef} className="space-y-5">
             {/* QR code card */}
@@ -321,48 +258,6 @@ export default function ARExperience() {
             </div>
           </div>
 
-          {/* Right: 3D preview */}
-          <div
-            ref={rightPanelRef}
-            className="relative h-80 lg:h-full min-h-[400px] border border-green-400/20 bg-black overflow-hidden"
-          >
-            {/* Corner brackets */}
-            <div
-              className="absolute top-2 left-2 w-3 h-3 border-t border-l border-green-400/40 z-10"
-              aria-hidden="true"
-            />
-            <div
-              className="absolute top-2 right-2 w-3 h-3 border-t border-r border-green-400/40 z-10"
-              aria-hidden="true"
-            />
-            <div
-              className="absolute bottom-2 left-2 w-3 h-3 border-b border-l border-green-400/30 z-10"
-              aria-hidden="true"
-            />
-            <div
-              className="absolute bottom-2 right-2 w-3 h-3 border-b border-r border-green-400/30 z-10"
-              aria-hidden="true"
-            />
-
-            {/* Top label */}
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
-              <span className="text-[10px] text-green-400/40 tracking-widest uppercase">
-                // 3D_PREVIEW
-              </span>
-            </div>
-
-            {/* R3F Canvas — only mounts when section is near viewport */}
-            <div className="absolute inset-0">
-              {canvasVisible ? <ARPreviewScene key={canvasKey} onCreated={handleCanvasCreated} /> : <div className="w-full h-full bg-black" />}
-            </div>
-
-            {/* Bottom label */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
-              <span className="text-[10px] text-green-400/50 tracking-wider">
-                Powered by Three.js
-              </span>
-            </div>
-          </div>
         </div>
       </div>
     </section>

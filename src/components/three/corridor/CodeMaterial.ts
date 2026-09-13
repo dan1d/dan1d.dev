@@ -25,6 +25,8 @@ export interface CodeMaterialOptions {
   /** faint solid fill so dark faces still occlude */
   fill?: number;
   transparent?: boolean;
+  /** use instanceColor as an rgb tint multiplier (default: instanceColor.g boosts brightness) */
+  instanceTint?: boolean;
 }
 
 const VERT = /* glsl */ `
@@ -32,6 +34,7 @@ const VERT = /* glsl */ `
   varying vec3 vWorldNormal;
   varying vec3 vViewDir;
   varying float vBoost;
+  varying vec3 vInst;
   void main() {
     vec3 p = position;
     vec3 n = normal;
@@ -41,8 +44,10 @@ const VERT = /* glsl */ `
     #endif
     #ifdef USE_INSTANCING_COLOR
       vBoost = instanceColor.g;
+      vInst = instanceColor;
     #else
       vBoost = 0.0;
+      vInst = vec3(1.0);
     #endif
     vec4 wp = modelMatrix * vec4(p, 1.0);
     vWorldPos = wp.xyz;
@@ -63,10 +68,12 @@ const FRAG = /* glsl */ `
   uniform float uRim;
   uniform float uFill;
   uniform float uOpaque;
+  uniform float uInstTint;
   varying vec3 vWorldPos;
   varying vec3 vWorldNormal;
   varying vec3 vViewDir;
   varying float vBoost;
+  varying vec3 vInst;
 
   float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 
@@ -96,7 +103,10 @@ const FRAG = /* glsl */ `
     else if (d < tLen) { float t = (d - 1.5) / (tLen - 1.5); trail = (1.0 - t) * (1.0 - t) * 0.85 + 0.15; }
 
     float charVar = 0.7 + hash(id * 3.17) * 0.6;
-    float bright = max(uBase, max(trail, vBoost)) * charVar;
+    float boost = mix(vBoost, 0.0, uInstTint);
+    float bright = max(uBase, max(trail, boost)) * charVar;
+    vec3 tint = mix(uTint, uTint * vInst * 1.5, uInstTint);
+    float fillMul = mix(1.0, vInst.g, uInstTint);
 
     float buzz = 3.0 + cH * 4.0;
     float seed = hash(id + floor(uTime * buzz) * 0.013);
@@ -112,9 +122,9 @@ const FRAG = /* glsl */ `
     float fog = smoothstep(46.0, 3.0, dist);
 
     float glyph = charA * bright * uBright * lambert;
-    vec3 col = (isHead > 0.5 ? vec3(0.8, 1.0, 0.85) : uTint * (0.35 + bright * 0.65)) * glyph;
-    col += uTint * rim * 0.55;
-    col += vec3(0.0, uFill, uFill * 0.3) * lambert;
+    vec3 col = (isHead > 0.5 ? vec3(0.8, 1.0, 0.85) : tint * (0.35 + bright * 0.65)) * glyph;
+    col += tint * rim * 0.55;
+    col += vec3(0.0, uFill, uFill * 0.3) * lambert * fillMul;
 
     float alpha = mix(clamp(glyph + rim * 0.5, 0.0, 1.0), 1.0, uOpaque);
     if (alpha < 0.01) discard;
@@ -137,6 +147,7 @@ export function createCodeMaterial(atlas: THREE.Texture, o: CodeMaterialOptions 
       uRim: { value: o.rim ?? 0.9 },
       uFill: { value: o.fill ?? 0.02 },
       uOpaque: { value: o.transparent ? 0.0 : 1.0 },
+      uInstTint: { value: o.instanceTint ? 1.0 : 0.0 },
     },
     vertexShader: VERT,
     fragmentShader: FRAG,

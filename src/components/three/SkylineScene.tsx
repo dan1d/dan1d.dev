@@ -1,10 +1,12 @@
 "use client";
 
-import { useRef, useMemo, useCallback, useState, createContext, useContext } from "react";
+import { useRef, useMemo, useCallback, useState, useEffect, createContext, useContext } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Text } from "@react-three/drei";
 import * as THREE from "three";
 import MatrixRain from "./MatrixRain";
+import { buildGlyphAtlas } from "./corridor/GlyphAtlas";
+import { createCodeMaterial, CodeClock } from "./corridor/CodeMaterial";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -37,19 +39,22 @@ const INTRO_BARS_DURATION = 2.2; // seconds for all bars to finish growing
 const INTRO_BAR_GROW_TIME = 0.6; // seconds each bar takes to grow
 const INTRO_TOTAL_DURATION = INTRO_CAMERA_DURATION + 0.5; // extra buffer after camera
 
-// Level → color mapping (brighter Matrix green scale)
+// Level → cap color (the lit top of each bar) and body tint (glyph brightness)
 const LEVEL_COLORS: Record<number, string> = {
-  0: "#1a3a25", // visible dark green
-  1: "#2d8a4e", // medium green
-  2: "#3fbd67", // bright green
-  3: "#52ef80", // brighter
-  4: "#00ff41", // full Matrix green
+  0: "#1e6b35",
+  1: "#2aa552",
+  2: "#3fd671",
+  3: "#7dff9f",
+  4: "#d6ffe3",
 };
+const LEVEL_TINT = [0.45, 0.6, 0.76, 0.9, 1.0];
 
 // Pre-build THREE.Color objects for reuse
 const LEVEL_THREE_COLORS = Object.fromEntries(
   Object.entries(LEVEL_COLORS).map(([k, v]) => [k, new THREE.Color(v)])
 );
+const LEVEL_TINT_COLORS = LEVEL_TINT.map((t) => new THREE.Color(t, t, t));
+const HOVER_COLOR = new THREE.Color("#ffffff");
 
 // ─── Easing functions ───────────────────────────────────────────────────────
 
@@ -150,9 +155,19 @@ function IntroController({ children }: { children: React.ReactNode }) {
 
 // ─── CameraIntro ──────────────────────────────────────────────────────────────
 
-const CAM_START = new THREE.Vector3(20, 14, 20);
-const CAM_END = new THREE.Vector3(8, 6, 8);
 const CAM_LOOK_AT = new THREE.Vector3(0, 0.5, 0);
+const ORBIT_RADIUS = 9.8;
+const ORBIT_ELEV = 0.5; // radians above the floor (~29°)
+function orbitPose(t: number, out: THREE.Vector3) {
+  // Slow sweep across the front of the skyline; never edge-on
+  const az = Math.sin(t * 0.11) * 0.62;
+  const el = ORBIT_ELEV + Math.sin(t * 0.07) * 0.08;
+  const r = ORBIT_RADIUS + Math.sin(t * 0.05) * 0.6;
+  out.set(r * Math.sin(az) * Math.cos(el), r * Math.sin(el) + 0.5, r * Math.cos(az) * Math.cos(el));
+  return out;
+}
+const CAM_START = new THREE.Vector3(18, 12, 16);
+const CAM_END = orbitPose(0, new THREE.Vector3());
 
 function CameraIntro() {
   const { camera } = useThree();
@@ -289,13 +304,13 @@ function GridFloor() {
     const ctx = canvas.getContext("2d")!;
 
     // Dark background
-    ctx.fillStyle = "#050e08";
+    ctx.fillStyle = "#03110a";
     ctx.fillRect(0, 0, size, size);
 
     // Grid lines
     const gridCount = 16;
     const cellSize = size / gridCount;
-    ctx.strokeStyle = "#00ff4130";
+    ctx.strokeStyle = "#00ff4155";
     ctx.lineWidth = 1;
 
     for (let i = 0; i <= gridCount; i++) {
@@ -311,7 +326,7 @@ function GridFloor() {
     }
 
     // Brighter major grid lines every 4 cells
-    ctx.strokeStyle = "#00ff4160";
+    ctx.strokeStyle = "#00ff41a0";
     ctx.lineWidth = 2;
     for (let i = 0; i <= gridCount; i += 4) {
       const pos = i * cellSize;
@@ -333,18 +348,36 @@ function GridFloor() {
     return tex;
   }, []);
 
+  const glowTexture = useMemo(() => {
+    const size = 256;
+    const canvas = document.createElement("canvas");
+    canvas.width = size; canvas.height = size;
+    const ctx = canvas.getContext("2d")!;
+    const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    g.addColorStop(0, "rgba(0,255,65,0.55)");
+    g.addColorStop(0.5, "rgba(0,255,65,0.12)");
+    g.addColorStop(1, "rgba(0,255,65,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, size, size);
+    return new THREE.CanvasTexture(canvas);
+  }, []);
+
   return (
-    <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-      <planeGeometry args={[width, depth]} />
-      <meshPhongMaterial
-        map={gridTexture}
-        emissive="#003300"
-        emissiveIntensity={0.3}
-        transparent
-        opacity={0.9}
-        side={THREE.DoubleSide}
-      />
-    </mesh>
+    <group>
+      {/* Glow pad under the skyline — the "holo table" */}
+      <mesh position={[0, -0.07, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[width * 1.8, depth * 6]} />
+        <meshBasicMaterial map={glowTexture} transparent blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+      </mesh>
+      <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[width, depth]} />
+        <meshBasicMaterial map={gridTexture} transparent opacity={0.95} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Edge frame */}
+      <lineSegments position={[0, -0.04, 0]}>
+        <edgesGeometry args={[new THREE.BoxGeometry(width, 0.001, depth)]} />
+        <lineBasicMaterial color="#00ff41" transparent opacity={0.6} />
+      </lineSegments>
+    </group>
   );
 }
 
@@ -353,11 +386,32 @@ function GridFloor() {
 interface InstancedBarsProps {
   data: SkylineCell[];
   onHover?: (cell: SkylineCell | null) => void;
+  atlas: THREE.Texture;
 }
 
-function InstancedBars({ data, onHover }: InstancedBarsProps) {
+function InstancedBars({ data, onHover, atlas }: InstancedBarsProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const materialRef = useRef<THREE.MeshPhongMaterial>(null);
+  const capsRef = useRef<THREE.InstancedMesh>(null);
+  const haloRef = useRef<THREE.InstancedMesh>(null);
+  const haloTexture = useMemo(() => {
+    const size = 64;
+    const canvas = document.createElement("canvas");
+    canvas.width = size; canvas.height = size;
+    const ctx = canvas.getContext("2d")!;
+    const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    g.addColorStop(0, "rgba(255,255,255,0.9)");
+    g.addColorStop(0.35, "rgba(255,255,255,0.35)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, size, size);
+    return new THREE.CanvasTexture(canvas);
+  }, []);
+  const bodyMat = useMemo(
+    () => createCodeMaterial(atlas, { scale: 11, base: 0.46, bright: 1.9, rim: 0.9, fill: 0.09, speed: 1.2, instanceTint: true }),
+    [atlas]
+  );
+  // Mirror into a ref so useFrame can drive the glow uniform
+  const bodyMatRef = useRef<THREE.ShaderMaterial | null>(null);
+  useEffect(() => { bodyMatRef.current = bodyMat; }, [bodyMat]);
   const { raycaster, camera, gl } = useThree();
   const hoveredIndex = useRef<number>(-1);
   const introRef = useContext(IntroContext);
@@ -381,6 +435,7 @@ function InstancedBars({ data, onHover }: InstancedBarsProps) {
     const heights = new Float32Array(count);
     const positions = new Float32Array(count * 3);
     const colorArray = new Float32Array(count * 3);
+    const tintArray = new Float32Array(count * 3);
 
     cells.forEach((cell, i) => {
       const col = Math.floor(i / ROWS);
@@ -402,9 +457,10 @@ function InstancedBars({ data, onHover }: InstancedBarsProps) {
       const color =
         LEVEL_THREE_COLORS[cell.level] ?? LEVEL_THREE_COLORS[0];
       color.toArray(colorArray, i * 3);
+      (LEVEL_TINT_COLORS[cell.level] ?? LEVEL_TINT_COLORS[0]).toArray(tintArray, i * 3);
     });
 
-    return { cells, heights, positions, colorArray };
+    return { cells, heights, positions, colorArray, tintArray };
   }, [data, maxCount, count]);
 
   // Scratch object for matrix computation
@@ -416,12 +472,11 @@ function InstancedBars({ data, onHover }: InstancedBarsProps) {
       if (!mesh) return;
       (meshRef as React.RefObject<THREE.InstancedMesh | null>).current = mesh;
 
-      const { heights, positions, colorArray } = instanceLayout;
+      const { positions, tintArray } = instanceLayout;
 
       for (let i = 0; i < count; i++) {
         const x = positions[i * 3];
         const z = positions[i * 3 + 2];
-        const h = heights[i];
 
         // Start with 0 height (will be animated)
         dummy.position.set(x, 0, z);
@@ -431,8 +486,47 @@ function InstancedBars({ data, onHover }: InstancedBarsProps) {
       }
       mesh.instanceMatrix.needsUpdate = true;
 
-      const colorAttr = new THREE.InstancedBufferAttribute(colorArray, 3);
-      mesh.instanceColor = colorAttr;
+      mesh.instanceColor = new THREE.InstancedBufferAttribute(tintArray, 3);
+      mesh.instanceColor.needsUpdate = true;
+    },
+    [instanceLayout, count, dummy]
+  );
+
+  const haloRefCallback = useCallback(
+    (mesh: THREE.InstancedMesh | null) => {
+      if (!mesh) return;
+      (haloRef as React.RefObject<THREE.InstancedMesh | null>).current = mesh;
+      const { positions, colorArray } = instanceLayout;
+      for (let i = 0; i < count; i++) {
+        dummy.position.set(positions[i * 3], 0, positions[i * 3 + 2]);
+        dummy.rotation.set(-Math.PI / 2, 0, 0);
+        dummy.scale.set(BAR_SIZE * 2.6, BAR_SIZE * 2.6, 1);
+        dummy.updateMatrix();
+        mesh.setMatrixAt(i, dummy.matrix);
+      }
+      dummy.rotation.set(0, 0, 0);
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.instanceColor = new THREE.InstancedBufferAttribute(colorArray.slice(), 3);
+      mesh.instanceColor.needsUpdate = true;
+    },
+    [instanceLayout, count, dummy]
+  );
+
+  const capsRefCallback = useCallback(
+    (mesh: THREE.InstancedMesh | null) => {
+      if (!mesh) return;
+      (capsRef as React.RefObject<THREE.InstancedMesh | null>).current = mesh;
+      const { positions, colorArray } = instanceLayout;
+      for (let i = 0; i < count; i++) {
+        dummy.position.set(positions[i * 3], 0, positions[i * 3 + 2]);
+        dummy.rotation.set(-Math.PI / 2, 0, 0);
+        dummy.scale.set(BAR_SIZE, BAR_SIZE, 1);
+        dummy.updateMatrix();
+        mesh.setMatrixAt(i, dummy.matrix);
+      }
+      dummy.rotation.set(0, 0, 0);
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.instanceColor = new THREE.InstancedBufferAttribute(colorArray, 3);
       mesh.instanceColor.needsUpdate = true;
     },
     [instanceLayout, count, dummy]
@@ -440,6 +534,7 @@ function InstancedBars({ data, onHover }: InstancedBarsProps) {
 
   // Pointer move: raycasting for hover effect
   const pointer = useRef(new THREE.Vector2());
+  const settledRef = useRef(false);
 
   // Animate bars each frame based on intro progress
   useFrame(() => {
@@ -448,37 +543,53 @@ function InstancedBars({ data, onHover }: InstancedBarsProps) {
 
     const intro = introRef.current;
     const { heights, positions, cells } = instanceLayout;
+    const caps = capsRef.current;
+    const halo = haloRef.current;
 
-    // Update bar matrices based on intro progress
-    for (let i = 0; i < count; i++) {
-      const col = Math.floor(i / ROWS);
-      const row = i % ROWS;
+    // Update bar matrices based on intro progress (skip once settled)
+    if (!intro.done || !settledRef.current) {
+      for (let i = 0; i < count; i++) {
+        const col = Math.floor(i / ROWS);
+        const row = i % ROWS;
 
-      const progress = intro.barProgress(col, row);
-      const targetH = heights[i];
-      const currentH = Math.max(0.001, targetH * progress);
-      const x = positions[i * 3];
-      const z = positions[i * 3 + 2];
+        const progress = intro.barProgress(col, row);
+        const targetH = heights[i];
+        const currentH = Math.max(0.001, targetH * progress);
+        const x = positions[i * 3];
+        const z = positions[i * 3 + 2];
 
-      dummy.position.set(x, currentH / 2, z);
-      dummy.scale.set(BAR_SIZE, currentH, BAR_SIZE);
-      dummy.updateMatrix();
-      mesh.setMatrixAt(i, dummy.matrix);
-    }
-    mesh.instanceMatrix.needsUpdate = true;
+        dummy.position.set(x, currentH / 2, z);
+        dummy.scale.set(BAR_SIZE, currentH, BAR_SIZE);
+        dummy.updateMatrix();
+        mesh.setMatrixAt(i, dummy.matrix);
 
-    // Glow pulse on material
-    const mat = materialRef.current;
-    if (mat) {
-      const glow = intro.glowPulse;
-      if (glow > 0) {
-        mat.emissive.set("#00ff41");
-        mat.emissiveIntensity = glow * 0.8;
-      } else if (intro.done) {
-        mat.emissive.set("#000000");
-        mat.emissiveIntensity = 0;
+        if (caps) {
+          dummy.position.set(x, currentH + 0.002, z);
+          dummy.rotation.set(-Math.PI / 2, 0, 0);
+          dummy.scale.set(BAR_SIZE, BAR_SIZE, 1);
+          dummy.updateMatrix();
+          caps.setMatrixAt(i, dummy.matrix);
+          dummy.rotation.set(0, 0, 0);
+        }
+        if (halo) {
+          const lvl = cells[i]?.level ?? 0;
+          const hs = BAR_SIZE * (1.6 + lvl * 0.5);
+          dummy.position.set(x, currentH + 0.004, z);
+          dummy.rotation.set(-Math.PI / 2, 0, 0);
+          dummy.scale.set(hs, hs, 1);
+          dummy.updateMatrix();
+          halo.setMatrixAt(i, dummy.matrix);
+          dummy.rotation.set(0, 0, 0);
+        }
       }
+      mesh.instanceMatrix.needsUpdate = true;
+      if (caps) caps.instanceMatrix.needsUpdate = true;
+      if (halo) halo.instanceMatrix.needsUpdate = true;
+      if (intro.done) settledRef.current = true;
     }
+
+    // Glow pulse when the bars finish decoding
+    if (bodyMatRef.current) bodyMatRef.current.uniforms.uBright.value = 1.9 + intro.glowPulse * 1.6;
 
     // Hover raycasting (only after intro)
     if (!intro.done || !onHover) return;
@@ -491,19 +602,20 @@ function InstancedBars({ data, onHover }: InstancedBarsProps) {
     if (newIndex !== hoveredIndex.current) {
       // Restore previous hover
       if (hoveredIndex.current >= 0) {
-        const prevCell = cells[hoveredIndex.current];
-        const prevColor =
-          LEVEL_THREE_COLORS[prevCell?.level ?? 0] ?? LEVEL_THREE_COLORS[0];
-        mesh.setColorAt(hoveredIndex.current, prevColor);
+        const prevLevel = cells[hoveredIndex.current]?.level ?? 0;
+        mesh.setColorAt(hoveredIndex.current, LEVEL_TINT_COLORS[prevLevel]);
+        caps?.setColorAt(hoveredIndex.current, LEVEL_THREE_COLORS[prevLevel] ?? LEVEL_THREE_COLORS[0]);
       }
       hoveredIndex.current = newIndex;
       if (newIndex >= 0) {
-        mesh.setColorAt(newIndex, new THREE.Color("#ffffff"));
+        mesh.setColorAt(newIndex, HOVER_COLOR);
+        caps?.setColorAt(newIndex, HOVER_COLOR);
         onHover(cells[newIndex] ?? null);
       } else {
         onHover(null);
       }
       if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+      if (caps?.instanceColor) caps.instanceColor.needsUpdate = true;
     }
   });
 
@@ -520,58 +632,72 @@ function InstancedBars({ data, onHover }: InstancedBarsProps) {
   );
 
   return (
-    <instancedMesh
-      ref={meshRefCallback}
-      args={[undefined, undefined, count]}
-      onPointerMove={handlePointerMove as unknown as React.PointerEventHandler}
-      onPointerLeave={() => {
-        pointer.current.set(9999, 9999);
-        if (onHover) onHover(null);
-      }}
-      castShadow
-      receiveShadow
-    >
-      <boxGeometry args={[1, 1, 1]} />
-      <meshPhongMaterial
-        ref={materialRef}
-        vertexColors
-        emissive="#000000"
-        emissiveIntensity={0}
-        shininess={80}
-        specular={new THREE.Color("#114422")}
-      />
-    </instancedMesh>
+    <group>
+      <instancedMesh
+        ref={meshRefCallback}
+        args={[undefined, undefined, count]}
+        material={bodyMat}
+        onPointerMove={handlePointerMove as unknown as React.PointerEventHandler}
+        onPointerLeave={() => {
+          pointer.current.set(9999, 9999);
+          if (onHover) onHover(null);
+        }}
+      >
+        <boxGeometry args={[1, 1, 1]} />
+      </instancedMesh>
+      {/* Lit caps: the contribution level reads from above */}
+      <instancedMesh ref={capsRefCallback} args={[undefined, undefined, count]}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial vertexColors toneMapped={false} />
+      </instancedMesh>
+      {/* Soft halo over each cap, sized by level — the glow without a composer */}
+      <instancedMesh ref={haloRefCallback} args={[undefined, undefined, count]}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial map={haloTexture} vertexColors transparent blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} opacity={0.7} />
+      </instancedMesh>
+    </group>
   );
 }
 
-// ─── IntroAwareOrbitControls ────────────────────────────────────────────────
+// ─── CinematicOrbit ─────────────────────────────────────────────────────────
+// Drives the camera on a slow front-facing sweep once the intro is done. The
+// user can still drag; the sweep pauses and eases back after a few idle seconds.
 
-function IntroAwareOrbitControls() {
+function CinematicOrbit() {
   const controlsRef = useRef<React.ComponentRef<typeof OrbitControls>>(null);
   const introRef = useContext(IntroContext);
+  const orbitT = useRef(0);
+  const idleFor = useRef(10);
+  const dragging = useRef(false);
+  const target = useRef(new THREE.Vector3()).current;
 
-  useFrame(() => {
-    const controls = controlsRef.current;
-    if (!controls) return;
-
+  useFrame((state, delta) => {
+    const camera = state.camera;
     const intro = introRef.current;
-    // Disable autoRotate during intro, enable after
-    if (!intro.done) {
-      (controls as unknown as { autoRotate: boolean }).autoRotate = false;
-    } else {
-      (controls as unknown as { autoRotate: boolean }).autoRotate = true;
-    }
+    if (!intro.done) return;
+    if (dragging.current) { idleFor.current = 0; return; }
+    idleFor.current += delta;
+    if (idleFor.current < 4) return;
+    orbitT.current += delta;
+    orbitPose(orbitT.current, target);
+    // Ease back onto the rail after a drag, then ride it
+    const k = Math.min(1, (idleFor.current - 4) / 2.5);
+    camera.position.lerp(target, 0.03 + k * 0.5);
+    camera.lookAt(CAM_LOOK_AT);
+    controlsRef.current?.target.copy(CAM_LOOK_AT);
   });
 
   return (
     <OrbitControls
       ref={controlsRef}
       autoRotate={false}
-      autoRotateSpeed={0.5}
       enablePan={false}
-      minDistance={3}
-      maxDistance={30}
-      maxPolarAngle={Math.PI / 2.1}
+      minDistance={4}
+      maxDistance={24}
+      maxPolarAngle={Math.PI / 2.15}
+      target={CAM_LOOK_AT}
+      onStart={() => { dragging.current = true; }}
+      onEnd={() => { dragging.current = false; idleFor.current = 0; }}
     />
   );
 }
@@ -604,32 +730,12 @@ function IntroAwareMatrixRain() {
 // ─── Scene ───────────────────────────────────────────────────────────────────
 
 function Scene({ data, onHover }: SkylineSceneProps) {
+  const atlas = useMemo(() => buildGlyphAtlas(), []);
   return (
     <IntroController>
       {/* Camera animation */}
       <CameraIntro />
-
-      {/* Omnidirectional lighting — bars stay visible from every angle */}
-      <ambientLight intensity={1.0} />
-      <directionalLight
-        position={[10, 20, 10]}
-        intensity={1.5}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-        color="#ffffff"
-      />
-      <directionalLight
-        position={[-10, 15, -10]}
-        intensity={1.2}
-        color="#ffffff"
-      />
-      <directionalLight
-        position={[0, 10, -15]}
-        intensity={1.0}
-        color="#ffffff"
-      />
-      <pointLight position={[0, 12, 0]} intensity={1.5} color="#00ff41" />
-      <pointLight position={[-8, 5, 8]} intensity={1.0} color="#39d353" />
+      <CodeClock />
 
       {/* Matrix Rain behind the skyline — intensified during intro */}
       <IntroAwareMatrixRain />
@@ -641,10 +747,10 @@ function Scene({ data, onHover }: SkylineSceneProps) {
       <GridFloor />
 
       {/* Instanced skyline bars — animated growth */}
-      <InstancedBars data={data} onHover={onHover} />
+      <InstancedBars data={data} onHover={onHover} atlas={atlas} />
 
-      {/* Controls — autoRotate disabled during intro */}
-      <IntroAwareOrbitControls />
+      {/* Cinematic sweep after the intro; drag to look around */}
+      <CinematicOrbit />
     </IntroController>
   );
 }
@@ -655,13 +761,12 @@ export default function SkylineScene({ data, onHover, onCreated }: SkylineSceneP
   return (
     <Canvas
       camera={{
-        position: [20, 14, 20], // Start position — CameraIntro will animate to [8,6,8]
+        position: [18, 12, 16], // Start position — CameraIntro sweeps onto the orbit rail
         fov: 50,
         near: 0.1,
         far: 100,
       }}
       gl={{ antialias: true, alpha: false }}
-      shadows
       style={{ background: "#000000", width: "100%", height: "100%" }}
       onCreated={onCreated}
     >

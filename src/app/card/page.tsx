@@ -1,16 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import dynamic from "next/dynamic";
 import { QRCodeSVG } from "qrcode.react";
 import { siteConfig, socialLinks, skills } from "@/data/projects";
 
 // ─── 3D Background (SSR-off) ─────────────────────────────────────────────────
-const CardScene = dynamic(() => import("@/components/three/CardScene"), {
-  ssr: false,
-  loading: () => <div data-testid="card-canvas" className="absolute inset-0" />,
-});
-
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CARD_URL = "https://dan1d.dev/card";
 const displaySkills = skills.slice(0, 10);
@@ -458,6 +452,7 @@ export default function CardPage() {
   const cardRef = useRef<HTMLDivElement>(null);
   const cardInnerRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
+  const foilRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   const [cardDimensions, setCardDimensions] = useState({ w: 480, h: 700 });
 
@@ -492,6 +487,13 @@ export default function CardPage() {
     if (glow) {
       glow.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(0, 255, 65, 0.2) 0%, transparent 60%)`;
     }
+    // Holographic foil: an angular rainbow-green sheen that swings with the tilt
+    const foil = foilRef.current;
+    if (foil) {
+      const angle = Math.round((x / rect.width) * 180 + (y / rect.height) * 60);
+      foil.style.opacity = "1";
+      foil.style.background = `conic-gradient(from ${angle}deg at ${(x / rect.width) * 100}% ${(y / rect.height) * 100}%, rgba(0,255,65,0) 0deg, rgba(120,255,170,0.22) 40deg, rgba(0,255,65,0) 80deg, rgba(200,255,220,0.18) 130deg, rgba(0,255,65,0) 180deg, rgba(60,255,120,0.2) 240deg, rgba(0,255,65,0) 300deg, rgba(180,255,210,0.16) 340deg, rgba(0,255,65,0) 360deg)`;
+    }
   }, []);
 
   const handleMouseLeave = useCallback(() => {
@@ -505,6 +507,7 @@ export default function CardPage() {
     if (glow) {
       glow.style.background = "transparent";
     }
+    if (foilRef.current) foilRef.current.style.opacity = "0";
   }, []);
 
   // ── Measure card for rain canvas ────────────────────────────────────────
@@ -589,6 +592,10 @@ export default function CardPage() {
           0%, 100% { opacity: 0.03; }
           50% { opacity: 0.06; }
         }
+        @keyframes etch-scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
         @keyframes flicker {
           0%, 100% { opacity: 1; }
           92% { opacity: 1; }
@@ -649,22 +656,8 @@ export default function CardPage() {
 
         {/* ── Two-column layout: Spoon left, Card right ───────────────────── */}
         <div className="relative z-10 flex-1 flex items-center justify-center w-full max-w-7xl mx-auto px-4 py-20">
-          {/* Left: 3D Spoon Scene */}
-          <div className="hidden lg:block relative w-1/2 h-[600px]" style={{ animation: "card-entrance 1.2s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both" }}>
-            <CardScene />
-            {/* "There is no spoon" quote */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center">
-              <p className="text-[11px] text-green-400/40 tracking-[0.2em] italic">
-                &ldquo;There is no spoon.&rdquo;
-              </p>
-              <p className="text-[9px] text-green-400/20 tracking-[0.3em] mt-1">
-                &mdash; SPOON BOY
-              </p>
-            </div>
-          </div>
-
-          {/* Right: Card content */}
-          <main className="relative w-full lg:w-1/2 max-w-[500px] mx-auto lg:mx-0 lg:pl-8">
+          {/* The card — the whole show */}
+          <main className="relative w-full max-w-[560px] mx-auto">
           {/* Terminal header above card */}
           <div
             className="mb-6 text-center"
@@ -734,6 +727,30 @@ export default function CardPage() {
                   aria-hidden="true"
                 />
 
+                {/* Holographic foil — follows the tilt, blends like real foil */}
+                <div
+                  ref={foilRef}
+                  className="absolute inset-0 pointer-events-none z-20 transition-opacity duration-500"
+                  style={{ opacity: 0, mixBlendMode: "screen" }}
+                  aria-hidden="true"
+                />
+
+                {/* Etched micro-text along the top and bottom edges */}
+                <div className="absolute top-0 left-0 right-0 h-3 overflow-hidden pointer-events-none z-30 opacity-40" aria-hidden="true">
+                  <div className="whitespace-nowrap text-[6px] leading-3 tracking-[0.35em] text-green-400/60" style={{ animation: "etch-scroll 40s linear infinite" }}>
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <span key={i}>{`DAN1D.DEV // SENIOR FULL-STACK ENGINEER // CLEARANCE: OMEGA // NODE: ${siteConfig.handle.toUpperCase()} // \u00a0`}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 h-3 overflow-hidden pointer-events-none z-30 opacity-40" aria-hidden="true">
+                  <div className="whitespace-nowrap text-[6px] leading-3 tracking-[0.35em] text-green-400/60" style={{ animation: "etch-scroll 46s linear infinite reverse" }}>
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <span key={i}>{"IDENTITY_DOSSIER.exe // MATRIX.PROTOCOL.v3.1 // THERE IS NO SPOON // \u00a0"}</span>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Mouse-follow glow */}
                 <div
                   ref={glowRef}
@@ -788,10 +805,10 @@ export default function CardPage() {
                     </span>
                   </div>
 
-                  {/* Avatar -- faceless hacker */}
-                  <div className="relative group">
+                  {/* Avatar -- the mask (lifted off the card for parallax) */}
+                  <div className="relative group" style={{ transform: "translateZ(42px)" }}>
                     <div
-                      className="w-32 h-32 border border-green-400/30 relative overflow-hidden"
+                      className="w-44 h-44 border border-green-400/30 relative overflow-hidden"
                       style={{
                         boxShadow: "0 0 40px rgba(0,255,65,0.12), inset 0 0 40px rgba(0,255,65,0.05)",
                       }}
@@ -819,7 +836,7 @@ export default function CardPage() {
                   </div>
 
                   {/* Name with glitch */}
-                  <div className="text-center space-y-2">
+                  <div className="text-center space-y-2" style={{ transform: "translateZ(30px)" }}>
                     <h1
                       className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight"
                       style={{ color: "#39ff14", textShadow: "0 0 15px rgba(57,255,20,0.5)" }}
@@ -920,7 +937,7 @@ export default function CardPage() {
                   </div>
 
                   {/* QR Code */}
-                  <div className="flex flex-col items-center gap-2.5">
+                  <div className="flex flex-col items-center gap-2.5" style={{ transform: "translateZ(18px)" }}>
                     <div
                       className="relative p-3 border border-green-400/15 bg-black"
                       style={{ boxShadow: "0 0 25px rgba(0,255,65,0.06)" }}

@@ -91,12 +91,6 @@ describe("ARExperience section", () => {
     expect(btn).toHaveAttribute("href", "/ar");
   });
 
-  it("renders the 3D preview canvas", () => {
-    render(<ARExperience />);
-    const canvas = screen.getByTestId("ar-preview-canvas");
-    expect(canvas).toBeInTheDocument();
-  });
-
   it("renders numbered steps (1, 2, 3) as instructions", () => {
     render(<ARExperience />);
     expect(screen.getByText("1")).toBeInTheDocument();
