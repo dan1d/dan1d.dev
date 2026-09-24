@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 
 const navLinks = [
   { label: "Projects", href: "/#projects" },
   { label: "GitHub", href: "/#github" },
   { label: "Resume", href: "/#resume" },
   { label: "Card", href: "/#card" },
+  { label: "Photography", href: "/photo" },
+  { label: "LinkedIn", href: "https://www.linkedin.com/in/dan1d", external: true },
 ];
 
 export default function Navbar() {
@@ -64,14 +67,15 @@ export default function Navbar() {
 
         {/* Desktop Nav Links */}
         <ul className="hidden md:flex items-center gap-6" role="list">
-          {navLinks.map(({ label, href }) => (
+          {navLinks.map(({ label, href, external }) => (
             <li key={href}>
-              <a
+              <Link
                 href={href}
+                {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                 className="text-xs text-green-400/50 hover:text-green-400 transition-colors duration-200 tracking-wider uppercase"
               >
                 {label}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
@@ -112,15 +116,16 @@ export default function Navbar() {
       {menuOpen && (
         <div className="md:hidden bg-black/95 border-t border-green-400/15 px-4 pb-4 font-mono">
           <ul className="flex flex-col gap-4 pt-4" role="list">
-            {navLinks.map(({ label, href }) => (
+            {navLinks.map(({ label, href, external }) => (
               <li key={href}>
-                <a
+                <Link
                   href={href}
+                  {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                   onClick={() => setMenuOpen(false)}
                   className="text-xs text-green-400/50 hover:text-green-400 transition-colors duration-200 block uppercase tracking-wider"
                 >
                   {label}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

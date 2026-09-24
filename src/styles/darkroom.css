@@ -1,0 +1,23 @@
+/* ─── Darkroom design tokens ────────────────────────────────────────────── */
+
+:root {
+  --dk-bg: #050505;
+  --dk-surface: #0c0c0c;
+  --dk-fg: #edeae4;
+  --dk-muted: #8a8681;
+  --dk-safelight: #f2b441;
+
+  /* Motion */
+  --dk-develop: 900ms;
+}
+
+.darkroom {
+  background: var(--dk-bg);
+  color: var(--dk-fg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dk-develop: 0ms;
+  }
+}

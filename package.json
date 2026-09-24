@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "photo:add": "node scripts/photo-add.ts"
   },
   "dependencies": {
     "@google/model-viewer": "^4.1.0",
@@ -36,8 +37,10 @@
     "@vitejs/plugin-react": "^5.1.4",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "exifr": "^7.1.3",
     "happy-dom": "^20.8.3",
     "jsdom": "^28.1.0",
+    "sharp": "^0.35.4",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.0.18"

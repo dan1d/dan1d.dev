@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# photo originals (never committed — see docs/v2-photography-plan.md)
+photos/inbox/
