@@ -11,3 +11,5 @@ export { CoderDesk } from "./CoderDesk";
 export type { CoderDeskProps } from "./CoderDesk";
 export { RainPanel } from "./RainPanel";
 export type { RainPanelProps } from "./RainPanel";
+export { intro, phaseAt, facadeReveal } from "./IntroTimeline";
+export { CodeFacade, RainVeil } from "./CodeFacade";

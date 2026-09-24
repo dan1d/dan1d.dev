@@ -7,6 +7,8 @@ import * as THREE from "three";
 import MatrixRain from "./MatrixRain";
 import { buildGlyphAtlas } from "./corridor/GlyphAtlas";
 import { createCodeMaterial, CodeClock } from "./corridor/CodeMaterial";
+import { CodeHall } from "./corridor/CodeHall";
+import { EffectComposer, Bloom, Vignette, ChromaticAberration } from "@react-three/postprocessing";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -20,6 +22,8 @@ export interface SkylineSceneProps {
   data: SkylineCell[];
   onHover?: (cell: SkylineCell | null) => void;
   onCreated?: (state: { gl: THREE.WebGLRenderer }) => void;
+  /** Full set: the skyline stands inside a glyph-built hall with bloom (3D experience page) */
+  cinematic?: boolean;
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -729,16 +733,21 @@ function IntroAwareMatrixRain() {
 
 // ─── Scene ───────────────────────────────────────────────────────────────────
 
-function Scene({ data, onHover }: SkylineSceneProps) {
+function Scene({ data, onHover, cinematic }: SkylineSceneProps) {
   const atlas = useMemo(() => buildGlyphAtlas(), []);
+  const caOffset = useMemo(() => new THREE.Vector2(0.0006, 0.0004), []);
   return (
     <IntroController>
       {/* Camera animation */}
       <CameraIntro />
       <CodeClock />
 
-      {/* Matrix Rain behind the skyline — intensified during intro */}
-      <IntroAwareMatrixRain />
+      {/* Cinematic: the skyline stands in a hall of code; otherwise a flat rain backdrop */}
+      {cinematic ? (
+        <CodeHall atlas={atlas} width={44} height={16} depth={48} floorY={-0.04} backZ={-26} tendrils={34} motes={900} clear={[7, 3]} />
+      ) : (
+        <IntroAwareMatrixRain />
+      )}
 
       {/* Floating holographic quotes */}
       <FloatingQuotes />
@@ -751,26 +760,35 @@ function Scene({ data, onHover }: SkylineSceneProps) {
 
       {/* Cinematic sweep after the intro; drag to look around */}
       <CinematicOrbit />
+
+      {cinematic && (
+        <EffectComposer multisampling={0}>
+          <Bloom intensity={1.35} luminanceThreshold={0.3} luminanceSmoothing={0.8} mipmapBlur />
+          <Vignette darkness={0.5} offset={0.22} />
+          <ChromaticAberration offset={caOffset} radialModulation={false} />
+        </EffectComposer>
+      )}
     </IntroController>
   );
 }
 
 // ─── SkylineScene (exported) ─────────────────────────────────────────────────
 
-export default function SkylineScene({ data, onHover, onCreated }: SkylineSceneProps) {
+export default function SkylineScene({ data, onHover, onCreated, cinematic = false }: SkylineSceneProps) {
   return (
     <Canvas
+      dpr={cinematic ? [1, 1.5] : undefined}
       camera={{
         position: [18, 12, 16], // Start position — CameraIntro sweeps onto the orbit rail
         fov: 50,
         near: 0.1,
-        far: 100,
+        far: 120,
       }}
-      gl={{ antialias: true, alpha: false }}
+      gl={{ antialias: !cinematic, alpha: false, powerPreference: "high-performance" }}
       style={{ background: "#000000", width: "100%", height: "100%" }}
       onCreated={onCreated}
     >
-      <Scene data={data} onHover={onHover} />
+      <Scene data={data} onHover={onHover} cinematic={cinematic} />
     </Canvas>
   );
 }

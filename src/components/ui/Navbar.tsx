@@ -7,7 +7,6 @@ const navLinks = [
   { label: "GitHub", href: "/#github" },
   { label: "Resume", href: "/#resume" },
   { label: "Card", href: "/#card" },
-  { label: "3D Experience", href: "/#ar" },
 ];
 
 export default function Navbar() {
@@ -79,13 +78,6 @@ export default function Navbar() {
 
         {/* CTA + Mobile Toggle */}
         <div className="flex items-center gap-4">
-          <a
-            href="/#ar"
-            className="hidden md:inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-mono tracking-widest border border-green-400/40 text-green-400 hover:border-green-400 hover:bg-green-400/10 transition-all duration-200"
-          >
-            View in 3D
-          </a>
-
           {/* Hamburger */}
           <button
             type="button"
@@ -131,15 +123,6 @@ export default function Navbar() {
                 </a>
               </li>
             ))}
-            <li>
-              <a
-                href="/#ar"
-                onClick={() => setMenuOpen(false)}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs tracking-widest border border-green-400/40 text-green-400"
-              >
-                View in 3D
-              </a>
-            </li>
           </ul>
         </div>
       )}

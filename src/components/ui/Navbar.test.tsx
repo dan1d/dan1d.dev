@@ -20,22 +20,10 @@ describe("Navbar", () => {
     expect(link).toHaveAttribute("href", "/#projects");
   });
 
-  it("renders a 3D Experience navigation link with correct href", () => {
-    render(<Navbar />);
-    const link = screen.getByRole("link", { name: /3d experience/i });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "/#ar");
-  });
-
   it("renders a GitHub navigation link with correct href", () => {
     render(<Navbar />);
     const link = screen.getByRole("link", { name: /github/i });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "/#github");
-  });
-
-  it("renders a 'View in 3D' CTA button", () => {
-    render(<Navbar />);
-    expect(screen.getByRole("link", { name: /view in 3d/i })).toBeInTheDocument();
   });
 });

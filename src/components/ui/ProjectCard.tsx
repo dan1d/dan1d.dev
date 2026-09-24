@@ -1,16 +1,18 @@
 "use client";
 
 import { Project } from "@/data/projects";
+import HoloCard from "@/components/ui/HoloCard";
+import DecodeText from "@/components/ui/DecodeText";
 
 interface ProjectCardProps {
   project: Project;
 }
 
 export default function ProjectCard({ project }: ProjectCardProps) {
-  const { title, description, url, tags, featured, modelUrl } = project;
+  const { title, description, url, tags, featured } = project;
 
   return (
-    <article className="group relative flex flex-col bg-black border border-green-400/20 p-6 font-mono transition-all duration-300 hover:border-green-400/60 hover:shadow-[0_0_20px_0_rgba(0,255,65,0.12)]">
+    <HoloCard className="group relative flex flex-col bg-black border border-green-400/20 p-6 font-mono hover:border-green-400/60 hover:shadow-[0_0_24px_0_rgba(0,255,65,0.14)]">
       {/* Corner brackets */}
       <div className="absolute top-2 left-2 w-3 h-3 border-t border-l border-green-400/40" aria-hidden="true" />
       <div className="absolute top-2 right-2 w-3 h-3 border-t border-r border-green-400/40" aria-hidden="true" />
@@ -34,15 +36,17 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       </div>
 
       {/* Title */}
-      <h3
+      <DecodeText
+        as="h3"
+        text={title}
+        duration={700}
+        delay={350}
         className="text-sm font-bold text-lime-400 mb-2 pr-20 uppercase tracking-wide"
         style={{ textShadow: "0 0 8px #39ff14" }}
-      >
-        {title}
-      </h3>
+      />
 
       {/* Description */}
-      <p className="text-xs text-green-300/60 leading-relaxed mb-4 flex-1">{description}</p>
+      <DecodeText as="p" text={description} duration={1100} delay={550} className="text-xs text-green-300/60 leading-relaxed mb-4 flex-1" />
 
       {/* Tags */}
       <ul className="flex flex-wrap gap-1.5 mb-5" aria-label={`${title} tags`}>
@@ -70,32 +74,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           <span className="text-green-400/50" aria-hidden="true">]</span>
         </a>
 
-        {/* View in 3D button */}
-        <button
-          type="button"
-          data-testid="ar-view-btn"
-          aria-label={`View ${title} in 3D`}
-          disabled={!modelUrl}
-          className="inline-flex items-center justify-center w-8 h-8 border border-green-400/20 bg-black text-green-400/60 hover:text-green-400 hover:border-green-400/50 transition-colors duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
-          title={modelUrl ? "View in 3D" : "3D model coming soon"}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="w-3.5 h-3.5"
-            aria-hidden="true"
-          >
-            <path d="M12 2L2 7l10 5 10-5-10-5z" />
-            <path d="M2 17l10 5 10-5" />
-            <path d="M2 12l10 5 10-5" />
-          </svg>
-        </button>
       </div>
-    </article>
+    </HoloCard>
   );
 }

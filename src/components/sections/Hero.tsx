@@ -265,7 +265,7 @@ export default function Hero() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const [introComplete, setIntroComplete] = useState(false);
-  const [phase, setPhase] = useState<IntroPhase>("hold");
+  const [phase, setPhase] = useState<IntroPhase>("rain");
   const { ref: sectionVisRef, visible: canvasVisible } = useCanvasVisibility("0px");
   const { ready: onboardingReady } = useOnboarding();
 
@@ -371,10 +371,10 @@ export default function Hero() {
     };
   }, []);
 
-  // Fallback: force intro complete after 12s (only starts counting after onboarding dismissed)
+  // Fallback: force intro complete after 16s (only starts counting after onboarding dismissed)
   useEffect(() => {
     if (!onboardingReady) return;
-    const timeout = setTimeout(() => setIntroComplete(true), 12000);
+    const timeout = setTimeout(() => setIntroComplete(true), 16000);
     return () => clearTimeout(timeout);
   }, [onboardingReady]);
 
@@ -479,7 +479,7 @@ export default function Hero() {
           </a>
 
           <a
-            href="#ar"
+            href="/ar"
             aria-label="Try 3D Experience"
             className="inline-flex items-center justify-center px-8 py-3.5 font-mono text-sm tracking-widest border border-green-400/30 text-green-400/70 hover:border-green-400/60 hover:text-green-400 hover:bg-green-400/5 transition-all duration-300"
           >

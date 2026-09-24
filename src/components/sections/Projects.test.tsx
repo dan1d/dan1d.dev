@@ -38,57 +38,39 @@ describe("Projects section", () => {
     expect(screen.getByRole("heading", { name: /projects/i })).toBeInTheDocument();
   });
 
-  it("renders VulnSentry project card with correct title", () => {
+  it("renders the dan1d.dev open-source card with its title", () => {
     render(<Projects />);
-    expect(screen.getByText("VulnSentry")).toBeInTheDocument();
+    expect(screen.getByText("dan1d.dev")).toBeInTheDocument();
   });
 
-  it("renders VulnSentry description", () => {
+  it("renders the dan1d.dev description", () => {
     render(<Projects />);
-    expect(
-      screen.getByText(/Ruby CVE auto-PR bot/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/open-source 3D portfolio/i)).toBeInTheDocument();
   });
 
-  it("project card has a link to vulnsentry.com", () => {
+  it("open-source card links to its GitHub repository", () => {
     render(<Projects />);
-    const link = screen.getByRole("link", { name: /visit vulnsentry/i });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "https://vulnsentry.com");
+    const link = screen.getByRole("link", { name: /view dan1d\.dev on github/i });
+    expect(link).toHaveAttribute("href", "https://github.com/dan1d/dan1d.dev");
   });
 
-  it("renders project tags (Rails 8, Security, etc.)", () => {
+  it("renders project tags (Next.js, Three.js, etc.)", () => {
     render(<Projects />);
-    const card = screen.getByText("VulnSentry").closest("article")!;
-    expect(within(card).getByText("Rails 8")).toBeInTheDocument();
-    expect(within(card).getByText("Security")).toBeInTheDocument();
-    expect(within(card).getByText("Automation")).toBeInTheDocument();
-    expect(within(card).getByText("Ruby")).toBeInTheDocument();
+    const card = screen.getByText("dan1d.dev").closest("article")!;
+    expect(within(card).getByText("Next.js")).toBeInTheDocument();
+    expect(within(card).getByText("Three.js")).toBeInTheDocument();
+    expect(within(card).getByText("React Three Fiber")).toBeInTheDocument();
   });
 
-  it("featured projects have a featured badge with data-testid='featured-badge'", () => {
+  it("shows no featured product cards", () => {
     render(<Projects />);
-    const badges = screen.getAllByTestId("featured-badge");
-    expect(badges.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("each project card has a 'View in 3D' button with data-testid='ar-view-btn'", () => {
-    render(<Projects />);
-    const arButtons = screen.getAllByTestId("ar-view-btn");
-    expect(arButtons.length).toBeGreaterThan(0);
-  });
-
-  it("'View in 3D' button is accessible with an aria-label", () => {
-    render(<Projects />);
-    const arButtons = screen.getAllByTestId("ar-view-btn");
-    expect(arButtons.length).toBeGreaterThan(0);
-    arButtons.forEach((btn) => expect(btn).toHaveAttribute("aria-label"));
+    expect(screen.queryAllByTestId("featured-badge")).toHaveLength(0);
   });
 
   it("renders a grid container for project cards", () => {
     render(<Projects />);
     // The grid wrapper should contain the project card
-    const card = screen.getByText("VulnSentry").closest("article");
+    const card = screen.getByText("dan1d.dev").closest("article");
     expect(card).toBeInTheDocument();
   });
 });

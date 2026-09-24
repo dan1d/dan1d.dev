@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 import { projects, openSourceProjects, railsContributions } from "@/data/projects";
 import ProjectCard from "@/components/ui/ProjectCard";
+import OpenSourceCard from "@/components/ui/OpenSourceCard";
+import DecodeText from "@/components/ui/DecodeText";
 
 export default function Projects() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -19,27 +21,29 @@ export default function Projects() {
         gsap.registerPlugin(ScrollTrigger);
 
         ctx = gsap.context(() => {
-          if (!cardsRef.current) return;
-
-          const cards = cardsRef.current.querySelectorAll("article");
-          if (cards.length === 0) return;
-
-          gsap.fromTo(
-            cards,
-            { opacity: 0, y: 60 },
-            {
-              opacity: 1,
-              y: 0,
-              duration: 0.9,
-              stagger: 0.15,
-              ease: "power3.out",
-              scrollTrigger: {
-                trigger: cardsRef.current,
-                start: "top 80%",
-                once: true,
-              },
-            }
-          );
+          if (!sectionRef.current) return;
+          // Every card grid rises out of its floor as it enters: a perspective
+          // tilt that flattens on arrival. The glyph veil on each card handles
+          // the materialise, so no opacity fade here. Transform is cleared
+          // afterwards so the card's own pointer tilt (CSS vars) takes over.
+          const grids = sectionRef.current.querySelectorAll<HTMLElement>("[data-card-grid]");
+          grids.forEach((grid) => {
+            const cards = grid.querySelectorAll("article");
+            if (cards.length === 0) return;
+            gsap.fromTo(
+              cards,
+              { y: 70, rotateX: -22, transformPerspective: 900, transformOrigin: "50% 100%" },
+              {
+                y: 0,
+                rotateX: 0,
+                duration: 1.0,
+                stagger: 0.12,
+                ease: "power3.out",
+                scrollTrigger: { trigger: grid, start: "top 85%", once: true },
+                onComplete: () => { gsap.set(cards, { clearProps: "transform" }); },
+              }
+            );
+          });
         }, sectionRef);
       } catch {
         // GSAP not available in test environment; skip animation
@@ -86,23 +90,21 @@ export default function Projects() {
             <span className="text-green-400/30 text-[10px] tracking-widest">// SYSTEM</span>
             <span className="h-px flex-1 bg-green-400/20" />
           </div>
-          <h2
+          <DecodeText
+            as="h2"
+            text="Projects"
+            duration={600}
             className="text-2xl sm:text-3xl font-bold tracking-tight mb-3"
             style={{ color: "#39ff14", textShadow: "0 0 10px #39ff14" }}
-          >
-            Projects
-          </h2>
-          <p className="text-sm text-green-400/50 max-w-xl">
-            Things I&apos;ve built — from Rails backends to React frontends.
-          </p>
-          <p className="mt-2 text-green-400/40 text-xs">
-            &gt; Inevitable, Mr. Anderson.
-          </p>
+          />
+          <DecodeText as="p" text="Things I've built — from Rails backends to React frontends." duration={900} delay={200} className="text-sm text-green-400/50 max-w-xl" />
+          <DecodeText as="p" text="> Inevitable, Mr. Anderson." duration={700} delay={700} className="mt-2 text-green-400/40 text-xs" />
         </div>
 
         {/* Featured projects grid */}
         {featuredProjects.length > 0 && (
-          <div ref={cardsRef}>
+          <div ref={cardsRef} data-card-grid className="relative">
+            <div className="code-floor" aria-hidden="true" />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {featuredProjects.map((project) => (
                 <ProjectCard key={project.id} project={project} />
@@ -119,7 +121,8 @@ export default function Projects() {
               // OPEN_SOURCE
               <span className="h-px flex-1 bg-green-400/15" />
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-card-grid>
+              <div className="code-floor" aria-hidden="true" />
               {otherProjects.map((project) => (
                 <ProjectCard key={project.id} project={project} />
               ))}
@@ -144,82 +147,10 @@ export default function Projects() {
               // OPEN_SOURCE
               <span className="h-px flex-1 bg-green-400/15" />
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {openSourceProjects.map((project) => (
-                <article
-                  key={project.id}
-                  data-testid="open-source-card"
-                  className="group relative flex flex-col bg-black border border-green-400/15 p-5 font-mono transition-all duration-300 hover:border-green-400/50 hover:shadow-[0_0_20px_0_rgba(57,255,20,0.08)]"
-                >
-                  {/* Corner brackets */}
-                  <div className="absolute top-1.5 left-1.5 w-2 h-2 border-t border-l border-green-400/30" aria-hidden="true" />
-                  <div className="absolute top-1.5 right-1.5 w-2 h-2 border-t border-r border-green-400/30" aria-hidden="true" />
-                  <div className="absolute bottom-1.5 left-1.5 w-2 h-2 border-b border-l border-green-400/20" aria-hidden="true" />
-                  <div className="absolute bottom-1.5 right-1.5 w-2 h-2 border-b border-r border-green-400/20" aria-hidden="true" />
-
-                  {/* Title */}
-                  <h4
-                    className="text-sm font-bold text-lime-400 mb-1.5"
-                    style={{ textShadow: "0 0 6px #39ff14" }}
-                  >
-                    {project.title}
-                  </h4>
-
-                  {/* Description */}
-                  <p className="text-[11px] text-green-300/50 leading-relaxed mb-3 flex-1">
-                    {project.description}
-                  </p>
-
-                  {/* Tags */}
-                  <ul
-                    className="flex flex-wrap gap-1 mb-4"
-                    aria-label={`${project.title} tags`}
-                  >
-                    {project.tags.map((tag) => (
-                      <li key={tag}>
-                        <span className="px-1.5 py-0.5 text-[9px] uppercase tracking-wider border border-green-400/15 bg-green-400/5 text-green-400/50">
-                          {tag}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 mt-auto">
-                    {project.github && (
-                      <a
-                        href={project.github}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`View ${project.title} on GitHub`}
-                        data-testid="github-link"
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono border border-green-400/20 text-green-400/60 hover:text-green-400 hover:border-green-400/50 transition-colors duration-200"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                          className="w-3 h-3"
-                          aria-hidden="true"
-                        >
-                          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-                        </svg>
-                        GitHub
-                      </a>
-                    )}
-                    {project.url && project.url !== project.github && (
-                      <a
-                        href={project.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`Visit ${project.title}`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-mono border border-green-400/30 text-green-400 hover:bg-green-400/10 transition-colors duration-200"
-                      >
-                        Visit
-                      </a>
-                    )}
-                  </div>
-                </article>
+            <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-card-grid>
+              <div className="code-floor" aria-hidden="true" />
+              {openSourceProjects.map((project, i) => (
+                <OpenSourceCard key={project.id} project={project} index={i} />
               ))}
             </div>
           </div>

@@ -10,37 +10,9 @@ export interface Project {
   image?: string;
 }
 
-export const projects: Project[] = [
-  {
-    id: "cobroya",
-    title: "CobroYa",
-    description:
-      "Open-source Mercado Pago payment platform with MCP server, OpenAI function calling, LangChain tools (Python), Telegram bot, WhatsApp Business API, and automation adapters for n8n, Zapier, Make, and Pipedream. Published on npm & PyPI with 212+ tests.",
-    url: "https://cobroya.app",
-    github: "https://github.com/dan1d/mercadopago-tool",
-    tags: ["TypeScript", "Python", "MCP", "OpenAI", "LangChain", "Payments"],
-    featured: true,
-  },
-  {
-    id: "salestobooks",
-    title: "SalesToBooks",
-    description:
-      "Automated restaurant bookkeeping — syncs daily POS sales into accounting software. Integrates with Clover, Square, Toast, QuickBooks, Xero, and 12,000+ banks via Plaid. Multi-location support with auto category mapping.",
-    url: "https://salestobooks.com",
-    tags: ["Rails", "Hotwire", "Plaid", "POS Integrations", "Accounting"],
-    featured: true,
-  },
-  {
-    id: "vulnsentry",
-    title: "VulnSentry",
-    description:
-      "Ruby CVE auto-PR bot — Rails 8 app that detects vulnerabilities in Ruby bundled gems and prepares human-reviewable bump PRs. Conservative, fail-closed safety model with DeepSeek cross-checks.",
-    url: "https://vulnsentry.com",
-    github: "https://github.com/dan1d/vulnsentry",
-    tags: ["Rails 8", "Security", "Automation", "Ruby"],
-    featured: true,
-  },
-];
+// Featured products were retired from the site on 2026-09-24; the open-source
+// work below is what the Projects section shows.
+export const projects: Project[] = []
 
 export const openSourceProjects: Project[] = [
   {

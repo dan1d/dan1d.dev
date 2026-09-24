@@ -11,7 +11,7 @@ const RESUME_LINES = [
   "  SUBJECT ........ Daniel Alejandro Dominguez Diaz",
   "  HANDLE ......... @dan1d",
   "  ROLE ........... Senior Full-Stack Engineer",
-  "  EXPERIENCE ..... 12+ years",
+  "  EXPERIENCE ..... 14+ years",
   "  CLEARANCE ...... LEVEL_4",
   "",
   "> SKILL_MATRIX",
@@ -31,11 +31,12 @@ const RESUME_LINES = [
   "  2021-2024 .. 2U / Senior Software Engineer",
   "               \u2514\u2500 Built ed-tech platform reaching 100K+ students",
   "",
-  "> ACTIVE_PROJECTS",
+  "> OPEN_SOURCE",
   "",
-  "  CobroYa ...... Open-Source Payment Platform",
-  "  VulnSentry ... Ruby CVE Auto-PR Bot",
-  "  Status ....... OPERATIONAL",
+  "  dan1d.dev ....... This portfolio, Next.js + React Three Fiber",
+  "  omniauth-* ...... OAuth2 strategies for POS and accounting APIs",
+  "  @dan1d/*-mcp .... MCP servers for LATAM market data",
+  "  Status .......... OPERATIONAL",
   "",
   "> NEURAL_LINK: ACTIVE \u25C9",
 ];
@@ -55,6 +56,8 @@ interface MatrixResumeSceneProps {
   autoPlay?: boolean;
   decodeDelay?: number;
   className?: string;
+  /** Leave the canvas see-through (a 3D set sits behind it) and back the text with dark glass */
+  transparent?: boolean;
 }
 
 interface RainColumn {
@@ -83,6 +86,7 @@ export default function MatrixResumeScene({
   autoPlay = true,
   decodeDelay = 2000,
   className = "",
+  transparent = false,
 }: MatrixResumeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -231,9 +235,16 @@ export default function MatrixResumeScene({
     // ─── Animation loop ─────────────────────────────────────────────────
     startTimeRef.current = performance.now();
 
+    // Offscreen sections must not spend main-thread time: keep the rAF chain
+    // alive (near-free) but skip all drawing until the canvas is in view
+    let inView = true;
+    const io = new IntersectionObserver(([e]) => { inView = e.isIntersecting; }, { rootMargin: "120px" });
+    io.observe(canvas);
+
     function animate() {
       const state = stateRef.current;
       if (!state || !ctx || !canvas) return;
+      if (!inView) { animFrameRef.current = requestAnimationFrame(animate); return; }
 
       const now = performance.now();
       const { width: w, height: h, charW, charH, gridCols, gridRows } = state;
@@ -244,8 +255,23 @@ export default function MatrixResumeScene({
         : 0;
 
       // ── Clear ──
-      ctx.fillStyle = "rgba(0, 0, 0, 0.92)";
-      ctx.fillRect(0, 0, w, h);
+      if (transparent) {
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
+        ctx.fillRect(0, 0, w, h);
+        // Dark glass behind the text block so the hall never fights the words
+        const maxLen = Math.max(...RESUME_LINES.map((l) => l.length));
+        const bw = maxLen * charW + 56, bh = RESUME_LINES.length * charH + 44;
+        const bx = state.textStartX - 28, by = state.textStartY - 22;
+        ctx.fillStyle = "rgba(0, 6, 3, 0.72)";
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeStyle = "rgba(0, 255, 65, 0.22)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
+      } else {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.92)";
+        ctx.fillRect(0, 0, w, h);
+      }
 
       ctx.font = FONT;
       ctx.textBaseline = "top";
@@ -390,12 +416,13 @@ export default function MatrixResumeScene({
     animFrameRef.current = requestAnimationFrame(animate);
 
     return () => {
+      io.disconnect();
       window.removeEventListener("resize", resize);
       if (animFrameRef.current) {
         cancelAnimationFrame(animFrameRef.current);
       }
     };
-  }, []);
+  }, [transparent]);
 
   return (
     <div ref={containerRef} className={`relative w-full h-full ${className}`}>

@@ -18,7 +18,7 @@ const { W, H, D } = CORRIDOR;
 const FLOOR = -H / 2;
 const CEIL = H / 2;
 
-function Instanced({ count, geometry, material, place }: {
+export function Instanced({ count, geometry, material, place }: {
   count: number;
   geometry: THREE.BufferGeometry;
   material: THREE.Material;
@@ -43,10 +43,10 @@ function Instanced({ count, geometry, material, place }: {
 
 export function CodeArchitecture({ atlas }: { atlas: THREE.Texture }) {
   const mats = useMemo(() => ({
-    tile: createCodeMaterial(atlas, { scale: 10, base: 0.09, bright: 1.2, rim: 0.4, fill: 0.004 }),
-    pillar: createCodeMaterial(atlas, { scale: 12, base: 0.16, bright: 1.5, rim: 0.8, fill: 0.008 }),
-    beam: createCodeMaterial(atlas, { scale: 12, base: 0.14, bright: 1.35, rim: 0.7, fill: 0.007 }),
-    rubble: createCodeMaterial(atlas, { scale: 26, base: 0.18, bright: 1.4, rim: 1.1, fill: 0.006, tint: [0.2, 1.0, 0.4] }),
+    tile: createCodeMaterial(atlas, { scale: 26, base: 0.3, bright: 1.8, rim: 0.5, fill: 0.008 }),
+    pillar: createCodeMaterial(atlas, { scale: 28, base: 0.38, bright: 2.0, rim: 0.9, fill: 0.012 }),
+    beam: createCodeMaterial(atlas, { scale: 28, base: 0.36, bright: 1.9, rim: 0.8, fill: 0.011 }),
+    rubble: createCodeMaterial(atlas, { scale: 44, base: 0.4, bright: 1.9, rim: 1.2, fill: 0.01, tint: [0.2, 1.0, 0.4] }),
   }), [atlas]);
 
   const geo = useMemo(() => ({

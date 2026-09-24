@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import DecodeText from "@/components/ui/DecodeText";
 import { QRCodeSVG } from "qrcode.react";
 import { siteConfig, socialLinks, skills } from "@/data/projects";
 
@@ -92,8 +93,12 @@ function CardMatrixRain({ width, height }: { width: number; height: number }) {
     const drops: number[] = new Array(columns).fill(0).map(() => Math.random() * -50);
 
     let animFrame: number;
+    let inView = true;
+    const io = new IntersectionObserver(([e]) => { inView = e.isIntersecting; }, { rootMargin: "120px" });
+    io.observe(canvas);
 
     const draw = () => {
+      if (!inView) { animFrame = requestAnimationFrame(draw); return; }
       ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
       ctx.fillRect(0, 0, width, height);
 
@@ -129,7 +134,7 @@ function CardMatrixRain({ width, height }: { width: number; height: number }) {
 
     draw();
 
-    return () => cancelAnimationFrame(animFrame);
+    return () => { io.disconnect(); cancelAnimationFrame(animFrame); };
   }, [width, height]);
 
   return (
@@ -559,9 +564,7 @@ export default function BusinessCard() {
             </h2>
             <p className="card-header-quote text-sm text-green-400/40 max-w-lg mx-auto leading-relaxed">
               &ldquo;
-              <span className="text-green-300/60 italic">
-                I can only show you the door. You&apos;re the one that has to walk through it.
-              </span>
+              <DecodeText as="span" text="I can only show you the door. You're the one that has to walk through it." duration={1400} delay={300} className="text-green-300/60 italic" />
               &rdquo;
               <span className="text-green-400/25 ml-2">&mdash; Morpheus</span>
             </p>

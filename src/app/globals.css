@@ -120,3 +120,175 @@ body {
   .film-grain { animation: none; }
   .glitch-flash { animation: none; opacity: 0; }
 }
+
+/* ─── Holo cards (projects) ─────────────────────────────────────────────── */
+
+.holo-card {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.18s ease-out, border-color 0.3s, box-shadow 0.3s;
+  will-change: transform;
+}
+
+.holo-glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(380px circle at var(--gx, 50%) var(--gy, 50%), rgba(0, 255, 65, 0.16), rgba(0, 255, 65, 0.03) 45%, transparent 70%);
+  opacity: var(--go, 0);
+  transition: opacity 0.35s ease;
+}
+
+@keyframes holo-scan {
+  from { background-position: -60% 0; }
+  to   { background-position: 160% 0; }
+}
+
+.holo-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 1px;
+  pointer-events: none;
+  background-image: linear-gradient(90deg, transparent, rgba(57, 255, 20, 0.9), transparent);
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  opacity: 0.55;
+  animation: holo-scan 3.4s linear infinite;
+}
+
+.holo-card:hover .holo-scan { opacity: 1; animation-duration: 1.6s; }
+
+/* Code floor: a perspective grid drifting toward the viewer beneath the cards */
+@keyframes code-floor {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 48px, 0 0; }
+}
+
+.code-floor {
+  position: absolute;
+  left: -30%;
+  right: -30%;
+  bottom: -12%;
+  height: 78%;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(0, 255, 65, 0.16) 0 1px, transparent 1px 48px),
+    repeating-linear-gradient(90deg, rgba(0, 255, 65, 0.12) 0 1px, transparent 1px 64px);
+  transform: perspective(600px) rotateX(64deg);
+  transform-origin: 50% 100%;
+  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent 85%);
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent 85%);
+  animation: code-floor 2.4s linear infinite;
+}
+
+[data-card-grid] > .grid, [data-card-grid] > article { position: relative; z-index: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .holo-card { transform: none; transition: none; }
+  .holo-scan, .code-floor { animation: none; }
+}
+
+/* ─── Open-source cards ─────────────────────────────────────────────────── */
+
+.os-card {
+  background:
+    linear-gradient(180deg, rgba(0, 255, 65, 0.05), transparent 38%),
+    linear-gradient(180deg, #040b07, #020604 70%, #010402);
+  box-shadow: inset 0 1px 0 rgba(0, 255, 65, 0.12), 0 12px 32px -18px rgba(0, 0, 0, 0.9);
+}
+
+/* Faint glyph texture across the whole card */
+.os-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.09;
+  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='96' font-family='Courier New,monospace' font-size='9' fill='%2300ff41'%3E%3Ctext x='2' y='12'%3E7A F0 2C 9E B1 04 D8%3C/text%3E%3Ctext x='2' y='28'%3EC3 51 8B 6F 1D E7 9A%3C/text%3E%3Ctext x='2' y='44'%3E0E 4B 72 A9 F3 38 5C%3C/text%3E%3Ctext x='2' y='60'%3E96 D1 2F 7B 0C E4 63%3C/text%3E%3Ctext x='2' y='76'%3EB8 3E 5A 07 CD 91 F2%3C/text%3E%3Ctext x='2' y='92'%3E1F 6D A4 C8 39 E0 57%3C/text%3E%3C/svg%3E");
+  -webkit-mask-image: linear-gradient(160deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.15) 55%, rgba(0, 0, 0, 0.6));
+  mask-image: linear-gradient(160deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.15) 55%, rgba(0, 0, 0, 0.6));
+  transition: opacity 0.4s ease;
+}
+.os-card:hover::before { opacity: 0.18; }
+
+.os-card-accent {
+  position: absolute;
+  left: 0;
+  top: 10%;
+  bottom: 10%;
+  width: 2px;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(0, 255, 65, 0.7), transparent);
+  opacity: 0.45;
+  transition: opacity 0.35s ease, top 0.35s ease, bottom 0.35s ease;
+}
+.os-card:hover .os-card-accent { opacity: 1; top: 2%; bottom: 2%; }
+
+.os-card-watermark {
+  position: absolute;
+  right: 14px;
+  bottom: 2px;
+  font-size: 72px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: rgba(0, 255, 65, 0.05);
+  pointer-events: none;
+  user-select: none;
+  transition: color 0.4s ease, transform 0.4s ease;
+}
+.os-card:hover .os-card-watermark { color: rgba(0, 255, 65, 0.11); transform: translateY(-4px); }
+
+@keyframes os-bar {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 1; }
+}
+.os-card-bar {
+  display: block;
+  width: 2px;
+  background: rgba(0, 255, 65, 0.7);
+  animation: os-bar 2.2s ease-in-out infinite;
+}
+
+@keyframes os-led {
+  0%, 100% { box-shadow: 0 0 4px 1px rgba(0, 255, 65, 0.6); opacity: 1; }
+  50%      { box-shadow: 0 0 2px 0 rgba(0, 255, 65, 0.3); opacity: 0.6; }
+}
+.os-card-led {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #39ff14;
+  animation: os-led 1.8s ease-in-out infinite;
+}
+
+.os-card-chip {
+  display: inline-block;
+  padding: 3px 7px 3px 9px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(134, 239, 172, 0.75);
+  background: rgba(0, 255, 65, 0.06);
+  border: 1px solid rgba(0, 255, 65, 0.22);
+  position: relative;
+  transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease;
+}
+.os-card-chip::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: rgba(57, 255, 20, 0.6);
+}
+.os-card:hover .os-card-chip { border-color: rgba(0, 255, 65, 0.45); color: rgba(187, 247, 208, 0.9); }
+
+@media (prefers-reduced-motion: reduce) {
+  .os-card-bar, .os-card-led { animation: none; }
+}

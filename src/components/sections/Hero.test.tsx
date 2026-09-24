@@ -70,11 +70,11 @@ describe("Hero", () => {
     expect(link).toHaveAttribute("href", "#projects");
   });
 
-  it("renders a 'Try 3D Experience' secondary CTA button with href='#ar'", () => {
+  it("renders a 'Try 3D Experience' secondary CTA button with href='/ar'", () => {
     renderHero();
     const link = screen.getByRole("link", { name: /try 3d experience/i });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "#ar");
+    expect(link).toHaveAttribute("href", "/ar");
   });
 
   it("has a 3D canvas container with data-testid='hero-canvas'", () => {

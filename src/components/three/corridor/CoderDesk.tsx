@@ -41,25 +41,25 @@ function buildMats(atlas: THREE.Texture): Mats {
   const code = (o: Parameters<typeof createCodeMaterial>[1]) => createCodeMaterial(atlas, o);
   return {
     // Big surfaces get big glyphs (≈6–8 cm) so the code reads as code, not texture
-    deskTop: code({ scale: 14, base: 0.12, bright: 1.5, rim: 0.6, fill: 0.006 }),
-    steel: code({ scale: 24, base: 0.22, bright: 1.6, tint: [0.45, 1.0, 0.6], rim: 1.0, fill: 0.012 }),
-    darkSteel: code({ scale: 18, base: 0.1, bright: 1.2, rim: 0.7, fill: 0.006 }),
-    chrome: code({ scale: 28, base: 0.3, bright: 1.7, tint: [0.6, 1.0, 0.75], rim: 1.2, fill: 0.014 }),
-    plastic: code({ scale: 22, base: 0.1, bright: 1.2, rim: 0.7, fill: 0.006 }),
-    matte: code({ scale: 16, base: 0.08, bright: 1.1, rim: 0.55, fill: 0.004 }),
-    leather: code({ scale: 15, base: 0.11, bright: 1.35, rim: 0.8, fill: 0.006 }),
-    hoodie: code({ scale: 16, base: 0.1, bright: 1.5, rim: 1.1, fill: 0.006 }),
+    deskTop: code({ scale: 25, base: 0.29, bright: 1.9, rim: 0.6, fill: 0.006 }),
+    steel: code({ scale: 43, base: 0.53, bright: 2.0, tint: [0.45, 1.0, 0.6], rim: 1.0, fill: 0.012 }),
+    darkSteel: code({ scale: 32, base: 0.24, bright: 1.6, rim: 0.7, fill: 0.006 }),
+    chrome: code({ scale: 50, base: 0.6, bright: 2.1, tint: [0.6, 1.0, 0.75], rim: 1.2, fill: 0.014 }),
+    plastic: code({ scale: 40, base: 0.24, bright: 1.6, rim: 0.7, fill: 0.006 }),
+    matte: code({ scale: 29, base: 0.19, bright: 1.5, rim: 0.55, fill: 0.004 }),
+    leather: code({ scale: 27, base: 0.26, bright: 1.75, rim: 0.8, fill: 0.006 }),
+    hoodie: code({ scale: 29, base: 0.24, bright: 1.9, rim: 1.1, fill: 0.006 }),
     // The hood carries the densest, brightest rain — it is the figure's face
-    hood: code({ scale: 22, base: 0.16, bright: 1.9, speed: 1.5, rim: 0.3, fill: 0.012, tint: [0.15, 1.0, 0.4] }),
+    hood: code({ scale: 40, base: 0.38, bright: 2.3, speed: 1.5, rim: 0.3, fill: 0.012, tint: [0.15, 1.0, 0.4] }),
     // Face under the hood: near-black, the glasses do the talking
     shadow: code({ scale: 40, base: 0.03, bright: 0.5, rim: 0.12, fill: 0.0 }),
-    skin: code({ scale: 30, base: 0.26, bright: 1.6, tint: [0.7, 1.0, 0.8], rim: 1.3, fill: 0.016 }),
-    ceramic: code({ scale: 28, base: 0.2, bright: 1.4, rim: 0.9, fill: 0.01 }),
-    glass: code({ scale: 24, base: 0.05, bright: 0.9, rim: 1.0, transparent: true }),
-    pcb: code({ scale: 34, base: 0.16, bright: 1.3, rim: 0.6, fill: 0.008 }),
+    skin: code({ scale: 54, base: 0.6, bright: 2.0, tint: [0.7, 1.0, 0.8], rim: 1.3, fill: 0.016 }),
+    ceramic: code({ scale: 50, base: 0.48, bright: 1.8, rim: 0.9, fill: 0.01 }),
+    glass: code({ scale: 43, base: 0.12, bright: 1.3, rim: 1.0, transparent: true }),
+    pcb: code({ scale: 61, base: 0.38, bright: 1.7, rim: 0.6, fill: 0.008 }),
     led: new THREE.MeshBasicMaterial({ color: GREEN, toneMapped: false }),
     ledDim: new THREE.MeshBasicMaterial({ color: "#1e8f3c" }),
-    cable: code({ scale: 40, base: 0.22, bright: 1.3, rim: 1.0, fill: 0.008 }),
+    cable: code({ scale: 72, base: 0.53, bright: 1.7, rim: 1.0, fill: 0.008 }),
   };
 }
 

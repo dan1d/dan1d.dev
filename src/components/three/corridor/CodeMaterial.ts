@@ -69,6 +69,7 @@ const FRAG = /* glsl */ `
   uniform float uFill;
   uniform float uOpaque;
   uniform float uInstTint;
+  uniform float uReveal;
   varying vec3 vWorldPos;
   varying vec3 vWorldNormal;
   varying vec3 vViewDir;
@@ -121,10 +122,17 @@ const FRAG = /* glsl */ `
     float dist = length(vViewDir);
     float fog = smoothstep(46.0, 3.0, dist);
 
-    float glyph = charA * bright * uBright * lambert;
+    // Materialise: cells switch on bottom-up with per-cell jitter as uReveal
+    // climbs 0 → 1; a cell flashes white the moment it resolves
+    float cellT = hash(id * 0.53 + 0.11) * 0.7 + clamp((vWorldPos.y + 2.0) / 20.0, 0.0, 1.0) * 0.3;
+    float rev = smoothstep(cellT - 0.1, cellT, uReveal);
+    float flash = rev * (1.0 - smoothstep(cellT, cellT + 0.12, uReveal)) * step(uReveal, 0.999);
+
+    float glyph = charA * bright * uBright * lambert * rev;
     vec3 col = (isHead > 0.5 ? vec3(0.8, 1.0, 0.85) : tint * (0.35 + bright * 0.65)) * glyph;
-    col += tint * rim * 0.55;
-    col += vec3(0.0, uFill, uFill * 0.3) * lambert * fillMul;
+    col += tint * rim * 0.55 * rev;
+    col += vec3(0.0, uFill, uFill * 0.3) * lambert * fillMul * rev;
+    col += vec3(0.85, 1.0, 0.9) * charA * flash * 2.2;
 
     float alpha = mix(clamp(glyph + rim * 0.5, 0.0, 1.0), 1.0, uOpaque);
     if (alpha < 0.01) discard;
@@ -148,6 +156,7 @@ export function createCodeMaterial(atlas: THREE.Texture, o: CodeMaterialOptions 
       uFill: { value: o.fill ?? 0.02 },
       uOpaque: { value: o.transparent ? 0.0 : 1.0 },
       uInstTint: { value: o.instanceTint ? 1.0 : 0.0 },
+      uReveal: { value: 1.0 },
     },
     vertexShader: VERT,
     fragmentShader: FRAG,

@@ -151,7 +151,8 @@ export default function GlobalMatrixRain() {
 
     // ── Resize ──
     function resize() {
-      const dpr = window.devicePixelRatio || 1;
+      // Background effect: 1.5x is plenty and costs 45% fewer pixels than 2x
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       w = window.innerWidth;
       h = window.innerHeight;
       canvas!.width = w * dpr;
@@ -470,7 +471,8 @@ export default function GlobalMatrixRain() {
       trailBounds: TrailBounds[],
       isForeground: boolean
     ) {
-      col.y += col.speed * (dt / 16.67) * 0.14;
+      const warp = Math.min(3.5, Math.abs(scrollVel) / 14);
+      col.y += col.speed * (dt / 16.67) * 0.14 * (1 + warp);
 
       if (col.y > numRows + col.trail) {
         col.y = -col.trail * Math.random();
@@ -481,9 +483,12 @@ export default function GlobalMatrixRain() {
       const x = c * CHAR_W;
       const rStart = Math.max(0, headRow - col.trail);
       const rEnd = Math.min(numRows, headRow);
+      // Parallax: foreground strands ride the scroll harder than the back layer
+      const par = (scrollY * (isForeground ? 0.22 : 0.07)) % h;
 
       for (let r = rStart; r <= rEnd; r++) {
         const dist = headRow - r;
+        const yy = (r * CHAR_H - par + h) % h;
 
         // Variable character buzz — check boost first for buzz rate
         const { boost, buzzRate } = isForeground
@@ -500,7 +505,7 @@ export default function GlobalMatrixRain() {
 
         if (isForeground) {
           // Foreground rain: slightly brighter, drawn on top of figures
-          alpha *= 0.35;
+          alpha *= 0.45;
           if (alpha < 0.01) continue;
           if (dist === 0) {
             ctx!.fillStyle = `rgba(100, 200, 100, ${alpha})`;
@@ -521,7 +526,7 @@ export default function GlobalMatrixRain() {
           }
         } else {
           // Subtle background rain
-          alpha *= 0.25;
+          alpha *= 0.34;
           if (alpha < 0.01) continue;
           if (dist === 0) {
             ctx!.fillStyle = `rgba(100, 180, 100, ${alpha})`;
@@ -532,18 +537,57 @@ export default function GlobalMatrixRain() {
           }
         }
 
-        ctx!.fillText(col.chars[r % col.chars.length], x, r * CHAR_H);
+        const ch = col.chars[r % col.chars.length];
+        ctx!.fillText(ch, x, yy);
+        // Streak: while scrolling fast the head smears along the motion
+        if (dist === 0 && warp > 0.35) {
+          const dir = scrollVel > 0 ? -1 : 1;
+          ctx!.globalAlpha = 0.45;
+          ctx!.fillText(ch, x, yy + dir * CHAR_H * warp * 0.6);
+          ctx!.globalAlpha = 0.2;
+          ctx!.fillText(ch, x, yy + dir * CHAR_H * warp * 1.2);
+          ctx!.globalAlpha = 1;
+        }
       }
     }
 
     // ── Animation loop ──
     let lastTime = 0;
 
+    // While the opaque hero corridor covers the viewport nothing here is
+    // visible, so skip the ~8k canvas calls per frame and give the WebGL
+    // scene the main thread. The hero is taller than the viewport, so test
+    // its rect rather than an intersection ratio; the read is cheap because
+    // nothing dirties layout between frames.
+    let heroEl: HTMLElement | null = null;
+    function heroCoversViewport(): boolean {
+      if (!heroEl) heroEl = document.getElementById("hero");
+      if (!heroEl) return false;
+      const r = heroEl.getBoundingClientRect();
+      return r.top <= 1 && r.bottom >= window.innerHeight - 1;
+    }
+    let rafId = 0;
+
+    // Scroll feel: the rain falls faster and streaks while the page moves,
+    // and the two depth layers slide at different rates (parallax)
+    let lastScrollY = window.scrollY;
+    let scrollVel = 0;
+    let scrollY = window.scrollY;
+
     function animate(now: number) {
+      if (heroCoversViewport()) {
+        lastTime = now;
+        rafId = requestAnimationFrame(animate);
+        return;
+      }
       if (!ctx) return;
 
       const dt = lastTime === 0 ? 16.67 : Math.min(now - lastTime, 50);
       lastTime = now;
+      scrollY = window.scrollY;
+      const v = (scrollY - lastScrollY) / (dt / 16.67);
+      lastScrollY = scrollY;
+      scrollVel = scrollVel * 0.82 + v * 0.18;
 
       // Clear to transparent (overlay — page content shows through)
       ctx.clearRect(0, 0, w, h);
@@ -649,7 +693,7 @@ export default function GlobalMatrixRain() {
       // Try spawning
       trySpawn(dt);
 
-      requestAnimationFrame(animate);
+      rafId = requestAnimationFrame(animate);
     }
 
     // ── Start with delay (wait for PageLoader) ──
@@ -657,12 +701,12 @@ export default function GlobalMatrixRain() {
       resize();
       window.addEventListener("resize", resize);
       lastTime = 0;
-      requestAnimationFrame(animate);
+      rafId = requestAnimationFrame(animate);
     }, 2500);
 
     return () => {
       clearTimeout(startDelay);
-      cancelAnimationFrame(0);
+      cancelAnimationFrame(rafId);
       window.removeEventListener("resize", resize);
     };
   }, []);

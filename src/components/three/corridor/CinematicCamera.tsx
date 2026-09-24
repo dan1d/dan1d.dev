@@ -3,42 +3,22 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 // ─── Cinematic intro camera ─────────────────────────────────────────────────
-// One scripted shot, told in beats. The camera is the single clock: it drives
-// position, focal length (fov), roll, chromatic aberration, and reports named
-// phases to the DOM so text overlays cut on the same frame as the picture.
-//
-//   0.0  BLACK / HOLD    static wide, slight push, rain wall fills frame
-//   0.6  APPROACH        slow dolly toward the entrance, lens tightens a touch
-//   1.6  WAKE            "Wake up, dan1d..." starts typing (DOM)
-//   3.2  ACCELERATE      dolly speeds up, lens widens (warp), slight dutch tilt
-//   5.4  GLITCH          stuttered jolt + chromatic spike, text cuts out
-//   5.9  PUSH            hard push-in, lens tightens onto the desk (compression)
-//   7.6  SETTLED         handheld breathing hold on the coder; UI reveals
+// One scripted shot, told in beats (see IntroTimeline for the sheet). The
+// camera is the single clock: it drives position, focal length (fov), roll,
+// chromatic aberration, writes `intro.t` for the rest of the set, and reports
+// named phases to the DOM so text overlays cut on the same frame as the picture.
 
-export type IntroPhase =
-  | "hold"
-  | "approach"
-  | "wake"
-  | "accelerate"
-  | "glitch"
-  | "push"
-  | "settled";
+import { BEATS, intro, phaseAt } from "./IntroTimeline";
+import type { IntroPhase } from "./IntroTimeline";
+
+export { BEATS };
+export type { IntroPhase };
 
 export interface CinematicCameraProps {
   onIntroComplete?: () => void;
   onPhase?: (phase: IntroPhase) => void;
   chromaticOffset: THREE.Vector2;
 }
-
-// Beat boundaries (seconds on the R3F clock)
-export const BEATS = {
-  approach: 0.6,
-  wake: 1.6,
-  accelerate: 3.2,
-  glitch: 5.4,
-  push: 5.9,
-  settled: 7.6,
-} as const;
 
 // Where the shot ends: framed on the coder at the desk (CoderDesk at z=-23)
 const END_POS = new THREE.Vector3(0.05, -0.3, -20.5);
@@ -67,19 +47,9 @@ function handheld(t: number, amp: number) {
   };
 }
 
-function phaseAt(t: number): IntroPhase {
-  if (t >= BEATS.settled) return "settled";
-  if (t >= BEATS.push) return "push";
-  if (t >= BEATS.glitch) return "glitch";
-  if (t >= BEATS.accelerate) return "accelerate";
-  if (t >= BEATS.wake) return "wake";
-  if (t >= BEATS.approach) return "approach";
-  return "hold";
-}
-
 export function CinematicCamera({ onIntroComplete, onPhase, chromaticOffset }: CinematicCameraProps) {
   const doneRef = useRef(false);
-  const phaseRef = useRef<IntroPhase>("hold");
+  const phaseRef = useRef<IntroPhase>("rain");
   // Occasional power flicker after settling: small, rare, decays fast
   const flickerRef = useRef({ intensity: 0, nextAt: 14 });
   const target = useRef(new THREE.Vector3()).current;
@@ -87,28 +57,42 @@ export function CinematicCamera({ onIntroComplete, onPhase, chromaticOffset }: C
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
+    intro.t = t;
     const cam = state.camera as THREE.PerspectiveCamera;
 
-    let x = 0, y = 0, z = 5.2;
+    let x = 0, y = 0, z = 17.2;
     let fov = FOV_WIDE;
     let roll = 0;
     let ca = 0.0006;
     let lookX = 0, lookY = 0, lookZ = z + FAR_TARGET_DZ;
 
-    if (t < BEATS.approach) {
-      // HOLD — almost static wide; a breath of push so it's never frozen
-      const p = clamp01(t / BEATS.approach);
-      z = 5.2 - p * 0.15;
-      lookZ = z + FAR_TARGET_DZ;
+    if (t < BEATS.resolve) {
+      // RAIN — the veil fills the frame; a breath of push so it's never frozen
+      const p = clamp01(t / BEATS.resolve);
+      z = 17.2 - p * 0.3;
+      const h = handheld(t, 0.02);
+      x = h.x; y = h.y; roll = h.roll;
+      lookY = 1.4; lookZ = z + FAR_TARGET_DZ;
+    } else if (t < BEATS.approach) {
+      // RESOLVE — the building materialises out of the rain; slow dolly
+      // 16.9 → 13.5 while the eye drifts down from the facade to street level
+      const p = clamp01((t - BEATS.resolve) / (BEATS.approach - BEATS.resolve));
+      const e = easeInOutCubic(p);
+      z = 16.9 - e * 3.4;
+      fov = FOV_WIDE - e * 1.0;
+      const h = handheld(t, 0.025);
+      x = h.x; y = h.y; roll = h.roll;
+      lookY = 1.4 - e * 0.9; lookZ = z + FAR_TARGET_DZ;
     } else if (t < BEATS.accelerate) {
-      // APPROACH — slow dolly 5.05 → 1.2, lens tightens slightly (anticipation)
+      // APPROACH — dolly across the street 13.5 → 1.2, up to the portico;
+      // lens tightens slightly (anticipation)
       const p = clamp01((t - BEATS.approach) / (BEATS.accelerate - BEATS.approach));
       const e = easeInOutCubic(p);
-      z = 5.05 - e * 3.85;
-      fov = FOV_WIDE + (FOV_TIGHT_PRE - FOV_WIDE) * e;
+      z = 13.5 - e * 12.3;
+      fov = FOV_WIDE - 1.0 + (FOV_TIGHT_PRE - FOV_WIDE + 1.0) * e;
       const h = handheld(t, 0.035);
       x = h.x; y = h.y; roll = h.roll;
-      lookZ = z + FAR_TARGET_DZ;
+      lookY = 0.5 * (1 - e); lookZ = z + FAR_TARGET_DZ;
     } else if (t < BEATS.glitch) {
       // ACCELERATE — 1.2 → -10 with a quartic ramp; lens widens into a warp,
       // and the horizon tilts a few degrees the faster we go (dutch angle)
